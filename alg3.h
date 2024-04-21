@@ -5,139 +5,243 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
 
 #define K 7
 #define W 15
-#define MIN_SUP_LENGTH 0
+#define MIN_SUP_LENGTH 40
+#define MAX_K_FINGER_OCCURRENCE -1
+#define MIN_SHARED_K_FINGERS 4
+#define MIN_REGION_K_FINGER_COVERAGE 0.27
+#define MAX_DIFF_REGION_PERCENTAGE 0.0
+#define MIN_REGION_LENGTH 0
+#define MIN_OVERLAP_COVERAGE 0.70
+#define MIN_OVERLAP_LENGTH 600
+
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
 
 typedef struct {
     int value;
     char* fingerprint;
+    int k_finger;
+    int index_offset;
 } Element;
 
+typedef struct {
+    int first;
+    int second;
+    int third;
+    int fourth;
+} Duo_int;
+
+typedef struct {
+    int left_offset1;
+    int left_index_offset1;
+    int left_supp_length1;
+    int left_offset2;
+    int left_index_offset2;
+    int left_supp_length2;
+    int right_offset1;
+    int right_index_offset1;
+    int right_supp_length1;
+    int right_offset2;
+    int right_index_offset2;
+    int right_supp_length2;
+    int number;
+} offset_struct;
+
+typedef struct {
+    GHashTable *overlap_dict;
+    GArray *lenghts;
+} User_data;
+
+
 /**
- * @brief A simple function to print an Element struct
+ * @brief Print the contents of an Element struct.
  *
- * A simple function to print an Element struct
- *
- * @param el Element to be printed
- *
+ * @param el The Element struct to print.
  */
 void print_Element(Element *el);
 
 /**
- * @brief Checks if a string is numeric.
+ * @brief Print the contents of a Duo_int struct.
  *
- * Checks if a string is numeric.
+ * @param du The Duo_int struct to print.
+ */
+void print_Duo_int(Duo_int *du);
+
+/**
+ * @brief Print the contents of an offset_struct struct.
  *
- * @param str The string to be checked.
+ * @param of The offset_struct struct to print.
+ */
+void print_offset_struct(offset_struct *of);
+
+/**
+ * @brief Check if a string represents a numeric value.
+ *
+ * @param str The string to check.
  * @return true if the string is numeric, false otherwise.
- *
  */
 bool is_numeric(const char *str);
 
 /**
- * @brief Calculates the supporting length of a GArray.
+ * @brief Calculate the supporting length of a subsequence in an array.
  *
- * This function calculates the supporting length of a given GArray by summing
- * up the elements starting from index 'i' and up to 'k' elements ahead.
- *
- * @param array The GArray containing integer elements.
- * @param i The starting index from which the calculation begins.
- * @param k The number of elements to include in the calculation.
- * @return The supporting length calculated as the sum of 'k' elements starting from index 'i'.
- *         Returns 0 if the input array is NULL.
- *
+ * @param array The array containing the sequence.
+ * @param i The starting index of the subsequence.
+ * @param k The length of the subsequence.
+ * @return The supporting length of the subsequence.
  */
 int supporting_length(GArray *array, int i, int k);
 
 /**
- * @brief Inserts an element into a GQueue according to a given criterion.
+ * @brief Insert an Element into a priority queue.
  *
- * This function inserts an element into a GQueue based on a comparison criterion
- * defined by the function pointer 'phi'. It pops elements from the queue until
- * the criterion is met, then pushes the new element onto the queue.
- *
- * @param array The GArray containing integer elements.
- * @param queue The GQueue into which the element will be inserted.
- * @param X The element to be inserted into the queue.
- * @param phi The comparison function used to determine the insertion point.
- * @param k The parameter used by the comparison function 'phi'.
+ * @param array The array used for calculating priorities.
+ * @param queue The priority queue.
+ * @param X The Element to insert.
+ * @param phi The priority function.
+ * @param k The length of the subsequence.
  */
 void insert(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k);
 
 /**
- * @brief Fetches an element from the head of a GQueue.
+ * @brief Insert an Element into a priority queue with lexicographical ordering.
  *
- * This function fetches and returns an element from the head of the given GQueue.
- * It pops elements from the queue until the value of the element at the head is
- * greater than or equal to the specified value 'T'.
+ * @param array The array used for calculating priorities.
+ * @param queue The priority queue.
+ * @param X The Element to insert.
+ * @param phi The priority function.
+ * @param k The length of the subsequence.
+ */
+void insertLex(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k);
+
+/**
+ * @brief Fetch the Element with the highest priority from a priority queue.
  *
- * @param queue The GQueue from which the element will be fetched.
- * @param T The value used to determine when to stop fetching elements.
- * @return The element fetched from the head of the queue.
+ * @param queue The priority queue.
+ * @param T The threshold value.
+ * @return The Element with the highest priority.
  */
 Element *fetch(GQueue *queue, int T);
 
 /**
- * @brief Prints the contents of a GQueue.
+ * @brief Print the contents of a priority queue.
  *
- * This function prints the contents of the given GQueue to stdout.
- *
- * @param queue The GQueue to be printed.
+ * @param queue The priority queue to print.
  */
 void print_queue(GQueue *queue);
 
 /**
- * @brief Prints the contents of a GArray.
+ * @brief Print the contents of an array.
  *
- * This function prints the contents of the given GArray to stdout.
- *
- * @param array The GArray to be printed.
+ * @param array The array to print.
  */
 void print_array(GArray *array);
 
 /**
- * @brief Parses a string into a GArray of integers.
+ * @brief Parse a string containing k-fingers into an array.
  *
- * This function parses the given string and extracts numeric tokens separated by spaces.
- * It then creates a GArray of integers containing these numeric tokens.
- *
- * @param line The input string to be parsed.
- * @return A GArray of integers parsed from the input string.
+ * @param line The input string.
+ * @return A GArray containing the parsed k-fingers.
  */
 GArray* get_k_fingers(char *line);
 
 /**
- * @brief Converts a section of a GArray into a string.
+ * @brief Convert a range of k-fingers to a string with a separator.
  *
- * This function converts a section of the given GArray into a string representation
- * with elements separated by the specified separator.
- *
- * @param array The GArray from which elements will be converted.
- * @param i The starting index of the section to be converted.
- * @param k The number of elements to include in the conversion.
- * @param separator The string used to separate elements in the resulting string.
- * @return A string representation of the section of the GArray.
+ * @param array The array containing the k-fingers.
+ * @param i The starting index of the range.
+ * @param k The length of the range.
+ * @param separator The separator to use between k-fingers.
+ * @return A string representation of the k-fingers with the separator.
  */
 char *k_finger_to_string(GArray *array, int i, int k, const char *separator);
 
 /**
- * @brief Implements algorithm 3.
+ * @brief Algorithm 3 for processing k-fingers.
  *
- * This function implements algorithm 3 using the provided parameters and functions.
- * It calculates the supporting length of the given fingerprint and generates a
- * resulting GArray of elements based on certain conditions.
- *
- * @param fingerprint The input GArray of fingerprints.
- * @param w The window size used in the algorithm.
- * @param k The number of elements to include in the supporting length calculation.
- * @param phi The supporting length function used in the algorithm.
- * @param n The number of elements in the input fingerprint.
- * @return A GArray containing the resulting elements generated by algorithm 3.
+ * @param fingerprint The array containing the k-fingers.
+ * @param w The window size.
+ * @param k The length of the k-fingers.
+ * @param phi The priority function.
+ * @param n The total number of k-fingers.
+ * @return A GArray containing the results of Algorithm 3.
  */
 GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i, int k), int n);
+
+/**
+ * @brief Compute k-finger occurrences and store them in a hash table.
+ *
+ * @param fingerprint_list The list of k-finger arrays.
+ * @return A GHashTable containing the k-finger occurrences.
+ */
+GHashTable *compute_k_finger_occurrences(GArray *fingerprint_list);
+
+/**
+ * @brief Filter a hash table based on certain criteria.
+ *
+ * @param key The key of the current entry.
+ * @param value The value of the current entry.
+ * @param user_data Additional user data.
+ * @return TRUE if the entry should be removed, FALSE otherwise.
+ */
+gboolean filter_hash_table(gpointer key, gpointer value, gpointer user_data);
+
+/**
+ * @brief Custom hash function for Duo_int keys.
+ *
+ * @param key The key to hash.
+ * @return The hash value.
+ */
+guint duo_int_hash(gconstpointer key);
+
+/**
+ * @brief Custom equality function for Duo_int keys.
+ *
+ * @param a The first key.
+ * @param b The second key.
+ * @return TRUE if the keys are equal, FALSE otherwise.
+ */
+gboolean duo_int_equal(gconstpointer a, gconstpointer b);
+
+/**
+ * @brief Iterate over k-finger occurrences and compute overlaps.
+ *
+ * @param key The key of the current occurrence.
+ * @param value The value of the current occurrence.
+ * @param user_data Additional user data.
+ */
+void iterate_occurrence(gpointer key, gpointer value, gpointer user_data);
+
+/**
+ * @brief Compute overlaps between k-finger occurrences and store them in a hash table.
+ *
+ * @param k_finger_occurrences The hash table containing k-finger occurrences.
+ * @param lengths The lengths array.
+ * @return A GHashTable containing the overlaps.
+ */
+GHashTable *compute_overlaps(GHashTable *k_finger_occurrences, GArray *lengths);
+
+/**
+ * @brief Print a PAF entry to a file.
+ *
+ * @param key The key of the PAF entry.
+ * @param value The value of the PAF entry.
+ * @param user_data The file pointer.
+ */
+void print_PAF(gpointer key, gpointer value, gpointer user_data);
+
+/**
+ * @brief Write PAF entries to a file.
+ *
+ * @param overlap_dict The hash table containing overlaps.
+ * @param fp The file pointer.
+ */
+void write_PAF(GHashTable *overlap_dict, FILE *fp);
 
 #endif // ALG3_H_
