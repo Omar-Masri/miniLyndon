@@ -20,6 +20,9 @@
 #define MIN_OVERLAP_COVERAGE 0.70
 #define MIN_OVERLAP_LENGTH 600
 
+#define INPUT fopen("../../Data/fingerprint_CFL_ICFL_COMB-30_s_300_noerr.txt", "r")
+#define OUTPUT fopen("overlaps.paf","w")
+
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 

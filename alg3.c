@@ -517,14 +517,14 @@ void write_PAF(GHashTable *overlap_dict, FILE *fp){
 
 int main(void){
     FILE *fp;
-    FILE *output = fopen("overlaps.paf","w");;
+    FILE *output = OUTPUT;
     ssize_t read;
     char *line;
     size_t len;
 
     clock_t begin_total = clock();
 
-    fp = fopen("../../Data/fingerprint_CFL_ICFL_COMB-30_s_300_noerr.txt", "r");
+    fp = INPUT;
 
     if (fp == NULL){
         printf("Error Reading File\n");
