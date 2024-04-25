@@ -9,56 +9,67 @@
 #include <stdbool.h>
 #include <time.h>
 
-#define K 7
+#define K 5
 #define W 15
-#define MIN_SUP_LENGTH 40
+#define MIN_SUP_LENGTH 15
 #define MAX_K_FINGER_OCCURRENCE -1
-#define MIN_SHARED_K_FINGERS 4
-#define MIN_REGION_K_FINGER_COVERAGE 0.27
-#define MAX_DIFF_REGION_PERCENTAGE 0.0
+#define MIN_SHARED_K_FINGERS 2
+#define MIN_REGION_K_FINGER_COVERAGE 0.17
+#define MAX_DIFF_REGION_PERCENTAGE 0.1
 #define MIN_REGION_LENGTH 0
-#define MIN_OVERLAP_COVERAGE 0.70
-#define MIN_OVERLAP_LENGTH 600
+#define MIN_OVERLAP_COVERAGE 0.20
+#define MIN_OVERLAP_LENGTH 100
 
-#define INPUT fopen("../../Data/fingerprint_CFL_ICFL_COMB-30_s_300_noerr.txt", "r")
-#define OUTPUT fopen("overlaps.paf","w")
+#define INPUT fopen("../../Data/fingerprint_CFL_ICFL_COMB-30_s_300.txt", "r")
+#define OUTPUT fopen("overlaps-pacbio-hifi.paf","w")
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 
 typedef struct {
-    int value;
+    unsigned value;
     char* fingerprint;
-    int k_finger;
-    int index_offset;
+    unsigned k_finger;
+    unsigned index_offset;
 } Element;
 
 typedef struct {
-    int first;
-    int second;
-    int third;
-    int fourth;
+    unsigned first;
+    unsigned second;
+    unsigned third;
+    unsigned fourth;
 } Duo_int;
 
 typedef struct {
-    int left_offset1;
-    int left_index_offset1;
-    int left_supp_length1;
-    int left_offset2;
-    int left_index_offset2;
-    int left_supp_length2;
-    int right_offset1;
-    int right_index_offset1;
-    int right_supp_length1;
-    int right_offset2;
-    int right_index_offset2;
-    int right_supp_length2;
-    int number;
+    unsigned first;
+    unsigned second;
+} Tuple_int;
+
+typedef struct {
+    char *first;
+    char *second;
+} Duo_char;
+
+typedef struct {
+    unsigned int left_offset1;
+    unsigned int left_index_offset1;
+    unsigned int left_supp_length1;     // you can remove this
+    unsigned int left_offset2;
+    unsigned int left_index_offset2;
+    unsigned int left_supp_length2;     // you can remove this
+    unsigned int right_offset1;
+    unsigned int right_index_offset1;
+    unsigned int right_supp_length1;
+    unsigned int right_offset2;
+    unsigned int right_index_offset2;
+    unsigned int right_supp_length2;
+    unsigned int number;
 } offset_struct;
 
 typedef struct {
     GHashTable *overlap_dict;
     GArray *lenghts;
+    GArray *read_ids;
 } User_data;
 
 
@@ -152,7 +163,7 @@ void print_array(GArray *array);
  * @param line The input string.
  * @return A GArray containing the parsed k-fingers.
  */
-GArray* get_k_fingers(char *line);
+GArray* get_k_fingers(char *line, char **read_id);
 
 /**
  * @brief Convert a range of k-fingers to a string with a separator.
@@ -175,7 +186,9 @@ char *k_finger_to_string(GArray *array, int i, int k, const char *separator);
  * @param n The total number of k-fingers.
  * @return A GArray containing the results of Algorithm 3.
  */
-GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i, int k), int n);
+GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i, int k),
+             void insert(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k),
+             int n);
 
 /**
  * @brief Compute k-finger occurrences and store them in a hash table.
@@ -228,7 +241,7 @@ void iterate_occurrence(gpointer key, gpointer value, gpointer user_data);
  * @param lengths The lengths array.
  * @return A GHashTable containing the overlaps.
  */
-GHashTable *compute_overlaps(GHashTable *k_finger_occurrences, GArray *lengths);
+GHashTable *compute_overlaps(GHashTable *k_finger_occurrences, GArray *lenghts, GArray *read_ids);
 
 /**
  * @brief Print a PAF entry to a file.
@@ -245,6 +258,11 @@ void print_PAF(gpointer key, gpointer value, gpointer user_data);
  * @param overlap_dict The hash table containing overlaps.
  * @param fp The file pointer.
  */
-void write_PAF(GHashTable *overlap_dict, FILE *fp);
+void write_PAF(GHashTable *overlap_dict,
+               void (*print)(gpointer key, gpointer value, gpointer user_data) ,FILE *fp);
+
+void free_garray_duo_int(GArray *array);
+
+void free_key_occurrences(gpointer key, gpointer value, gpointer user_data);
 
 #endif // ALG3_H_
