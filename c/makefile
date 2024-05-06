@@ -10,9 +10,11 @@ CC=gcc
 
 CCP=clang++
 
-CXXFLAGS = -m64
+OPTIMIZATION = -O3
 
-CFLAGS = `pkg-config --cflags glib-2.0` `pkg-config --libs glib-2.0` -g -O3
+CXXFLAGS = -m64 $(OPTIMIZATION)
+
+CFLAGS = `pkg-config --cflags glib-2.0` `pkg-config --libs glib-2.0` -g $(OPTIMIZATION)
 
 SRC_FILES_C = alg3.c utility.c fragments.c
 
