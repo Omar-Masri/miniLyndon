@@ -23,7 +23,7 @@
 #define NUM_THREADS 4
 
 #define INPUT stdin
-#define OUTPUT fopen("../overlaps-noerr.paf","w")
+#define OUTPUT fopen("./overlaps-noerr.paf","w")
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))

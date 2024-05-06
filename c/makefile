@@ -10,7 +10,7 @@ CC=gcc
 
 CCP=clang++
 
-OPTIMIZATION = -O3
+OPTIMIZATION = -Ofast
 
 CXXFLAGS = -m64 $(OPTIMIZATION)
 
