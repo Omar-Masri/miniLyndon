@@ -2,7 +2,10 @@
 #define ALG3_H_
 
 #include "utility.h"
+#include "fragments.h"
 #include <glib.h>
+#include <stdio.h>
+#include <pthread.h>
 
 GArray* get_k_fingers(char *line, char **read_id);
 char *k_finger_to_string(GArray *array, int i, int k, const char *separator);
@@ -12,8 +15,9 @@ GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i,
 GHashTable *compute_k_finger_occurrences(GArray *fingerprint_list);
 gboolean filter_hash_table(gpointer key, gpointer value, gpointer user_data);
 void iterate_occurrence(gpointer key, gpointer value, gpointer user_data);
-GHashTable *compute_matches(GHashTable *k_finger_occurrences);
-void iterate_overlap(gpointer key, gpointer value, gpointer user_data);
-GHashTable *compute_overlaps(GHashTable *k_finger_occurrences, GArray *lenghts, GArray *read_ids);
+void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k, FILE *fp
+                      ,GArray *lenghts, GArray *read_ids, int start, int end);
+void find_overlap(int first, int second, offset_struct *current, FILE *fp
+                  , GArray *lenghts, GArray *read_ids);
 
 #endif // ALG3_H_

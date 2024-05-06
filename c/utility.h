@@ -8,19 +8,22 @@
 #include <stdint.h>
 #include <sys/resource.h>
 
-#define K 5
+#define K 7
 #define W 15
-#define MIN_SUP_LENGTH 15
+#define MIN_SUP_LENGTH 30
 #define MAX_K_FINGER_OCCURRENCE -1
-#define MIN_SHARED_K_FINGERS 2
-#define MIN_REGION_K_FINGER_COVERAGE 0.17
+#define MIN_SHARED_K_FINGERS 4
+#define MIN_CHAIN_LENGTH 4
+#define MIN_REGION_K_FINGER_COVERAGE 0.50
 #define MAX_DIFF_REGION_PERCENTAGE 0.1
 #define MIN_REGION_LENGTH 0
-#define MIN_OVERLAP_COVERAGE 0.20
+#define MIN_OVERLAP_COVERAGE 0.27
 #define MIN_OVERLAP_LENGTH 100
 
-#define INPUT fopen("../../Data/fingerprint_CFL_ICFL_COMB-30_s_300.txt", "r")
-#define OUTPUT fopen("overlaps-pacbio-hifi.paf","w")
+#define NUM_THREADS 4
+
+#define INPUT stdin
+#define OUTPUT fopen("../overlaps-noerr.paf","w")
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
@@ -48,6 +51,12 @@ typedef struct {
     char *first;
     char *second;
 } Duo_char;
+
+typedef struct {
+    int first;
+    Element *second;
+    Duo_int *third;
+} Triple_int;
 
 typedef struct {
     unsigned int left_offset1;
@@ -82,7 +91,8 @@ void insert(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, 
 void insertLex(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k);
 Element *fetch(GQueue *queue, int T);
 void print_queue(GQueue *queue);
-void print_array(GArray *array);
+void print_array_Duo_int(GArray *array);
+void print_array_Triple_int(GArray *array);
 static inline guint32 murmur_hash_32(uint32_t key);
 guint duo_int_hash(gconstpointer key);
 gboolean duo_int_equal(gconstpointer a, gconstpointer b);
@@ -90,14 +100,15 @@ guint tuple_int_hash(gconstpointer key);
 gboolean tuple_int_equal(gconstpointer a, gconstpointer b);
 guint duo_char_hash(gconstpointer key);
 gboolean duo_char_equal(gconstpointer a, gconstpointer b);
-void print_PAF(gpointer key, gpointer value, gpointer user_data);
-void print_PAF_minimap(gpointer key, gpointer value, gpointer user_data);
-void write_PAF(GHashTable *overlap_dict, void (*print)(gpointer key, gpointer value, gpointer user_data), FILE *fp);
+void print_PAF(Duo_char *k, int *v, FILE *fp);
+void print_PAF_minimap(Duo_char *k, int *v, FILE *fp);
 void free_garray_duo_int(GArray *array);
 void free_garray_string(GArray *array);
 void free_key_value(gpointer key, gpointer value, gpointer user_data);
 void free_key_occurrences(gpointer key, gpointer value, gpointer user_data);
 void free_key_overlaps(gpointer key, gpointer value, gpointer user_data);
 void calculate_usage(struct rusage *usage);
+void free_partial_GArray(GArray *array, int start, int end);
+void free_garray_of_pointers(GArray *array);
 
 #endif // UTILITY_H_

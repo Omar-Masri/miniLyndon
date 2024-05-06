@@ -1,5 +1,7 @@
 #include "utility.h"
 
+extern pthread_mutex_t mutex;
+
 char* substring(const char* str, int start, int end) {
     int len = strlen(str);
 
@@ -138,7 +140,7 @@ void print_queue(GQueue *queue) {
     printf("\n");
 }
 
-void print_array(GArray *array) {
+void print_array_Duo_int(GArray *array) {
 
     if (array == NULL || array->len == 0) {
         printf("Array is empty\n");
@@ -149,6 +151,21 @@ void print_array(GArray *array) {
     for (guint i = 0; i < array->len; i++) {
         Duo_int *s = g_array_index(array, Duo_int *, i);
         printf("(%d,%d)\n", s->first, s->second);
+    }
+    printf("\n");
+}
+
+void print_array_Triple_int(GArray *array) {
+
+    if (array == NULL || array->len == 0) {
+        printf("Array is empty\n");
+        return;
+    }
+
+    printf("Array contents:\n");
+    for (guint i = 0; i < array->len; i++) {
+        Triple_int *s = g_array_index(array, Triple_int *, i);
+        printf("(%d,%d,%d)\n", s->first, s->second->index_offset, s->third->second);
     }
     printf("\n");
 }
@@ -195,11 +212,7 @@ gboolean duo_char_equal(gconstpointer a, gconstpointer b) {
     return strcmp(point1->first, point2->first) == 0 && strcmp(point1->second, point2->second) == 0;
 }
 
-void print_PAF(gpointer key, gpointer value, gpointer user_data){
-    FILE *fp = (FILE *)user_data;
-    int * v = (int *)value;
-    Duo_char *k = (Duo_char *)key;
-
+void print_PAF(Duo_char *k, int *v, FILE *fp){
     int start1 = v[4];
     int end1 = v[5];
 
@@ -220,13 +233,12 @@ void print_PAF(gpointer key, gpointer value, gpointer user_data){
 
     int strand = v[0] ^ v[1];
 
+    pthread_mutex_lock(&mutex);
     fprintf(fp, "%s\t%d\t%d\t%d\t%s\t%d\t%d\t%d\t%d\n", k->first, v[2], start1, end1, k->second, v[3], start2, end2, strand);
+    pthread_mutex_unlock(&mutex);
 }
 
-void print_PAF_minimap(gpointer key, gpointer value, gpointer user_data){
-    FILE *fp = (FILE *)user_data;
-    int * v = (int *)value;
-    Duo_char *k = (Duo_char *)key;
+void print_PAF_minimap(Duo_char *k, int *v, FILE *fp){
 
     int start1 = v[4];
     int end1 = v[5];
@@ -248,13 +260,29 @@ void print_PAF_minimap(gpointer key, gpointer value, gpointer user_data){
 
     int strand = v[0] ^ v[1];
 
+    pthread_mutex_lock(&mutex);
     fprintf(fp, "%s\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%d\n", k->first, v[2], start1,
             end1, !strand ? '+' : '-' , k->second, v[3], start2, end2, strand);
+    pthread_mutex_unlock(&mutex);
 }
 
-void write_PAF(GHashTable *overlap_dict,
-               void (*print)(gpointer key, gpointer value, gpointer user_data) ,FILE *fp){
-    g_hash_table_foreach(overlap_dict, print, fp);
+void free_partial_GArray(GArray *array, int start, int end){
+    for(int s = start; s < end; s++){
+        free(g_array_index(array, Element *, s));
+    }
+}
+
+void free_garray_of_pointers(GArray *array) {
+    if (array == NULL)
+        return;
+
+    for (guint i = 0; i < array->len; i++) {
+        Element *ptr = g_array_index(array, Element *, i);
+        if (ptr != NULL)
+            free(ptr); // Free individual pointer
+    }
+
+    g_array_free(array, TRUE); // Free the GArray itself
 }
 
 void free_garray_duo_int(GArray *array) {

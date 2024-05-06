@@ -1,4 +1,18 @@
 #include "alg3.h"
+#include "utility.h"
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+typedef struct {
+    int start;
+    int end;
+    GArray *minimizers;
+    GHashTable *k_finger_occurrences;
+    int k;
+    FILE *fp;
+    GArray *lengths;
+    GArray *read_ids;
+} ThreadArgs;
 
 GArray* get_k_fingers(char *line, char **read_id){
     GArray *array = g_array_new(FALSE, FALSE, sizeof(int));
@@ -148,9 +162,9 @@ GHashTable *compute_k_finger_occurrences(GArray *fingerprint_list){
 
             g_hash_table_insert(hash_table, val->fingerprint, retrived);
 
-            free(val);
+            //free(val);
         }
-        g_array_free(arr, TRUE);
+        //g_array_free(arr, TRUE);
     }
 
     return hash_table;
@@ -161,7 +175,8 @@ gboolean filter_hash_table(gpointer key, gpointer value, gpointer user_data) {
     if(val->len > 1 && (MAX_K_FINGER_OCCURRENCE == -1 || val->len <= MAX_K_FINGER_OCCURRENCE))
         return FALSE;
 
-    free_key_occurrences(key, value, NULL);
+    //free_key_occurrences(key, value, NULL);
+    free_garray_duo_int(value);
 
     return TRUE;
 }
@@ -256,25 +271,108 @@ void iterate_occurrence(gpointer key, gpointer value, gpointer user_data) {
     //free((char *)key);
 }
 
-GHashTable *compute_matches(GHashTable *k_finger_occurrences){
-    GHashTable *matches_dict = g_hash_table_new(tuple_int_hash, tuple_int_equal);
+int compare_Triple_int(const void *f, const void *s) {
+    Triple_int *a = *((Triple_int **)f);
+    Triple_int *b = *((Triple_int **)s);
 
-    g_hash_table_foreach(k_finger_occurrences, iterate_occurrence, matches_dict);
+    if (a->first < b->first)
+        return -1;
+    if (a->first > b->first)
+        return 1;
 
-    return matches_dict;
+    if (a->second->value < b->second->value)
+        return -1;
+    if (a->second->value > b->second->value)
+        return 1;
+
+    return 0;
 }
 
-void iterate_overlap(gpointer key, gpointer value, gpointer user_data) {
-    User_data *ud = (User_data *)user_data;
-    GHashTable *overlap_dict = ud->overlap_dict;
-    GArray *lenghts = ud->lenghts;
-    GArray *read_ids = ud->read_ids;
+void *thread_matches(void *args) {
+    ThreadArgs *thread_args = (ThreadArgs *)args;
 
-    Duo_int *f_index = (Duo_int *)key;
-    offset_struct *current = (offset_struct *)value;
+    compute_matches(thread_args->minimizers,thread_args->k_finger_occurrences
+                    ,thread_args->k, thread_args->fp
+                    ,thread_args->lengths, thread_args->read_ids
+                    ,thread_args->start, thread_args->end);
 
-    if(MIN_SHARED_K_FINGERS == 1 || current->number >= MIN_SHARED_K_FINGERS){
+    pthread_exit(NULL);
+}
 
+void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k, FILE *fp
+                      ,GArray *lenghts, GArray *read_ids, int start_thread, int end_thread){
+    for(int x=start_thread; x<=end_thread; x++){
+        GArray *current = g_array_index(minimizers, GArray *, x);
+        GArray *Arr = g_array_new(FALSE, FALSE, sizeof(Triple_int *));
+        for(int y=0; y < current->len; y++){
+            Element *current_element = g_array_index(current, Element *, y);
+            GArray *occ_list = (GArray *)g_hash_table_lookup(k_finger_occurrences, current_element->fingerprint);
+
+            if(occ_list == NULL)
+                continue;
+
+            for(int z=0; z<occ_list->len;z++){
+                Duo_int *value = g_array_index(occ_list, Duo_int *, z);
+
+                if(value->first <= x)
+                    continue;
+
+                Triple_int *new = malloc(sizeof(Triple_int));
+                new->first = value->first;
+                new->second = current_element;
+                new->third = value;
+
+                g_array_append_val(Arr, new);
+            }
+        }
+
+        g_array_sort(Arr, compare_Triple_int);
+
+        //print_array_Triple_int(Arr);
+
+        int start = 0;
+        Triple_int *value;
+        Triple_int *old_value = NULL;
+        for(int end=0; end<Arr->len; end++){
+            value = g_array_index(Arr, Triple_int *, end);
+            //printf("(%d,%d,%d)\n", value->first, value->second->value, value->third->second);
+
+            if((old_value != NULL && value->first != old_value->first) || end == Arr->len - 1){
+
+                if(end - start >= MIN_SHARED_K_FINGERS){
+                    offset_struct o;
+
+                    int score = maximal_colinear_subset(Arr, start, end, k, &o);
+
+                    o.number = score/k;
+
+                    //print_offset_struct(o);
+
+                    find_overlap(x, old_value->first, &o, fp, lenghts, read_ids);
+
+                    //printf("\n score: %d", score);
+
+                }
+                free_partial_GArray(Arr, start, end);
+                start = end;
+                old_value = NULL;
+            }
+            else{
+                old_value = value;
+            }
+        }
+
+        if(Arr->len)
+            free(g_array_index(Arr, Triple_int *, Arr->len-1));
+
+        g_array_free(Arr, TRUE);
+        free_garray_of_pointers(current);
+    }
+}
+
+void find_overlap(int first, int second, offset_struct *current, FILE *fp
+                  , GArray *lenghts, GArray *read_ids) {
+    if(current->number >= MIN_CHAIN_LENGTH){
         if(current->right_offset2 >= current->left_offset2){
 
             //length offset for left fingerprint
@@ -287,8 +385,8 @@ void iterate_overlap(gpointer key, gpointer value, gpointer user_data) {
             //supporting length right fingerprint
             int region_length2 = current->right_index_offset2 + current->right_supp_length2 - current->left_index_offset2;
 
-            int read1_length = g_array_index(lenghts, int, f_index->first);
-            int read2_length = g_array_index(lenghts, int, f_index->second);
+            int read1_length = g_array_index(lenghts, int, first);
+            int read2_length = g_array_index(lenghts, int, second);
 
             int min_cov_number = (int)((MIN_REGION_K_FINGER_COVERAGE * min(region_length1,region_length2)) / MIN_SUP_LENGTH);
             min_cov_number = min(min_cov_number, 15);
@@ -312,61 +410,35 @@ void iterate_overlap(gpointer key, gpointer value, gpointer user_data) {
                 if (min(region_length1,region_length2) >= MIN_OVERLAP_COVERAGE * ov_length && ov_length >= MIN_OVERLAP_LENGTH){
                     Duo_char *dd = malloc(sizeof(Duo_char));
 
-                    char *r1  = g_array_index(read_ids, char *, f_index->first);
+                    char *r1  = g_array_index(read_ids, char *, first);
                     int f_len = strlen(r1);
                     dd->first = substring(r1, 0, f_len-3);     //remove last two chars blahblah_0
 
-                    char *r2  = g_array_index(read_ids, char *, f_index->second);
+                    char *r2  = g_array_index(read_ids, char *, second);
                     int s_len = strlen(r2);
                     dd->second = substring(r2, 0, s_len-3);     //remove last two chars blahblah_0
 
-                    int* val = g_hash_table_lookup(overlap_dict, dd);
+                    int val[9];
+                    val[0] = r1[f_len-1] - '0';
+                    val[1] = r2[s_len-1] - '0';
+                    val[2] = read1_length;
+                    val[3] = read2_length;
+                    val[4] = start_ov1;
+                    val[5] = end_ov1;
+                    val[6] = start_ov2;
+                    val[7] = end_ov2;
+                    val[8] = ov_length;
 
-                    if(val == NULL){
-                        val = malloc(sizeof(int)*9);
-                        val[0] = r1[f_len-1] - '0';
-                        val[1] = r2[s_len-1] - '0';
-                        val[2] = read1_length;
-                        val[3] = read2_length;
-                        val[4] = start_ov1;
-                        val[5] = end_ov1;
-                        val[6] = start_ov2;
-                        val[7] = end_ov2;
-                        val[8] = ov_length;
+                    print_PAF_minimap(dd, val, fp);
 
-                        g_hash_table_insert(overlap_dict, dd, val);
-                    } else{
-                        if(ov_length > val[8]){
-                            val[0] = r1[f_len-1] - '0';
-                            val[1] = r2[s_len-1] - '0';
-                            val[2] = read1_length;
-                            val[3] = read2_length;
-                            val[4] = start_ov1;
-                            val[5] = end_ov1;
-                            val[6] = start_ov2;
-                            val[7] = end_ov2;
-                            val[8] = ov_length;
-                        }
-
-                        free(dd->first);
-                        free(dd->second);
-                        free(dd);
-                    }
+                    free(dd->first);
+                    free(dd->second);
+                    free(dd);
                 }
             }
         }
     }
 
-}
-
-GHashTable *compute_overlaps(GHashTable *k_finger_occurrences, GArray *lenghts, GArray *read_ids){
-    GHashTable *overlap_dict = g_hash_table_new(duo_char_hash, duo_char_equal);
-
-    User_data ud = {overlap_dict, lenghts, read_ids};
-
-    g_hash_table_foreach(k_finger_occurrences, iterate_overlap, &ud);
-
-    return overlap_dict;
 }
 
 int main(void){
@@ -435,14 +507,14 @@ int main(void){
     /* printf("%d %d %d %d %d %d %d %d %d %d\n", first->len, second->len, third->len, fourth->len, fifth->len, */
     /*        sixth->len,s7->len,s8->len,s9->len,s10->len); */
 
-    /* print_Element(g_array_index(second, Element *, 0)); */
+    /* print_Element(g_array_index(first, Element *, 0)); */
     /* puts(""); */
 
     // DICTIONARY
 
     GHashTable *k_finger_occurrences = compute_k_finger_occurrences(minimizers);
 
-    g_array_free(minimizers, TRUE);
+    //g_array_free(minimizers, TRUE);
 
     //GArray *arr = g_hash_table_lookup(k_finger_occurrences, "3_1_3_14_19_3_1");
 
@@ -464,53 +536,49 @@ int main(void){
 
     // Dizionari delle leftmost e rightmost k-fingers comuni
 
-    GHashTable *matches_dict = compute_matches(k_finger_occurrences);
+    pthread_t threads[NUM_THREADS];
+    ThreadArgs args[NUM_THREADS];
+
+    int move = 0;
+    int partition_size = minimizers->len / NUM_THREADS;
+
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        move += minimizers->len / (2 << i);   //geometric series
+        args[i].end = (i == 0) ? (minimizers->len - 1) : (args[i-1].start - 1);
+        args[i].start = (i == NUM_THREADS - 1) ? 0 : minimizers->len - move;
+
+        //args[i].start = i * partition_size;
+        //args[i].end = (i == NUM_THREADS - 1) ? (minimizers->len - 1) : (args[i].start + partition_size - 1);
+
+
+        args[i].minimizers = minimizers;
+        args[i].k_finger_occurrences = k_finger_occurrences;
+        args[i].k = K;
+        args[i].fp = output;
+        args[i].lengths = lengths;
+        args[i].read_ids = read_ids;
+
+        printf("(%d, %d)\n", args[i].start, args[i].end);
+
+        pthread_create(&threads[i], NULL, thread_matches, (void *)&args[i]);
+    }
+
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        pthread_join(threads[i], NULL);
+    }
+
+    g_array_free(minimizers, TRUE);
 
     g_hash_table_foreach(k_finger_occurrences, free_key_occurrences, NULL);
     g_hash_table_destroy(k_finger_occurrences);
-
-    /* Duo_int s = {55, 161516}; */
-
-    /* print_offset_struct(g_hash_table_lookup(matches_dict, &s)); */
-
-    calculate_usage(&usage);
-
-    guint num_keys = g_hash_table_size(matches_dict);
-    printf("\nNumber of MATCHES in the hash table: %u, Memory: %.2g GB \n", num_keys, usage.ru_maxrss*convert);
-
-    //Calcolo Regioni Comuni
-
-    GHashTable *overlap_dict = compute_overlaps(matches_dict, lengths, read_ids);
-
-    g_hash_table_foreach(matches_dict, free_key_value, NULL);
-    g_hash_table_destroy(matches_dict);
-
     g_array_free(lengths, TRUE);
     free_garray_string(read_ids);
-
-    calculate_usage(&usage);
-
-    guint overlap_keys = g_hash_table_size(overlap_dict);
-    printf("Number of OVERLAPS in the hash table: %u, Memory: %.2g GB \n", overlap_keys, usage.ru_maxrss*convert);
-
-    /* Duo_int ss = {0, 7794}; */
-
-    /* int *be = g_hash_table_lookup(overlap_dict, &ss); */
-
-    /* printf("%d %d %d %d %d %d %d %d %d", be[0], be[1], be[2], be[3], be[4], be[5], be[6], be[7], be[8]); */
-
-    // WRITE PAF FILE
-
-    write_PAF(overlap_dict, print_PAF_minimap, output);
 
     clock_t end_total = clock();
 
     calculate_usage(&usage);
 
-    printf("\nOverall time %f s\n", (double)(end_total - begin_total) / CLOCKS_PER_SEC);
-
-    g_hash_table_foreach(overlap_dict, free_key_overlaps, NULL);
-    g_hash_table_destroy(overlap_dict);
+    printf("\nOverall time %f s, Memory: %.2g GB \n", (double)(end_total - begin_total) / CLOCKS_PER_SEC, usage.ru_maxrss*convert);
 
     return 0;
 }
