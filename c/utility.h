@@ -20,10 +20,10 @@
 #define MIN_OVERLAP_COVERAGE 0.27
 #define MIN_OVERLAP_LENGTH 100
 
-#define NUM_THREADS 4
+#define NUM_THREADS 8
 
 #define INPUT stdin
-#define OUTPUT fopen("./overlaps-ecoli.paf","w")
+#define OUTPUT fopen("./overlaps-chr1.paf","w")
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))

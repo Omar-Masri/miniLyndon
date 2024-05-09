@@ -14,7 +14,7 @@ OPTIMIZATION = -Ofast
 
 CXXFLAGS = -m64 $(OPTIMIZATION)
 
-CFLAGS = `pkg-config --cflags glib-2.0` `pkg-config --libs glib-2.0` -g $(OPTIMIZATION)
+CFLAGS = `pkg-config --cflags glib-2.0` $(OPTIMIZATION)
 
 SRC_FILES_C = alg3.c utility.c fragments.c
 
@@ -34,11 +34,11 @@ all: $(BINDIR)minimizer_demo $(BINDIR)fingerprint
 
 $(BINDIR)minimizer_demo: $(OBJ_FILES_C)
 	$(dir_guard)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ `pkg-config --libs glib-2.0`
 
 $(BINDIR)%.o: %.c $(HDR_FILES_C)
 	$(dir_guard)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $< `pkg-config --libs glib-2.0`
 
 $(BINDIR)fingerprint: $(OBJ_FILES_CP)
 	$(dir_guard)
