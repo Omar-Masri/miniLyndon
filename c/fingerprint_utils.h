@@ -9,7 +9,21 @@
 
 using namespace std;
 
-vector<string> extract_long_reads(string input_fasta);
-tuple<vector<string>, vector<string>> compute_long_fingerprint_by_list(string fact_file, int T, vector<string> list_reads);
+// Definizione di una struttura per memorizzare gli argomenti
+struct Args {
+    string type = "1f_np";
+    string path = "training/";
+    string type_factorization = "CFL";
+    string fasta = "transcript_genes.fa";
+    string fingerprint = "prova_fingerprint.txt";
+    string fact = "create";
+    string shift = "shift";
+    string filter = "list";
+    string debug = "NO";
+    int n = 1;
+};
 
-#endif // FINGERPRINT_UTILS_H 
+void extract_long_reads(Args args, string name_file, int remainder);
+string compute_long_fingerprint(string s, int T);
+
+#endif // FINGERPRINT_UTILS_H
