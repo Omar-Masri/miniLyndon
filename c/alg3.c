@@ -256,7 +256,7 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
 
                     o.number = score/k;
 
-                    //print_offset_struct(o);
+                    //print_offset_struct(&o);
 
                     find_overlap(x, old_value->first, &o, fp, lenghts, read_ids);
 
@@ -318,15 +318,15 @@ void find_overlap(int first, int second, offset_struct *current, FILE *fp
                 int ov_length = min(end_ov1-start_ov1, end_ov2-start_ov2);
 
                 if (min(region_length1,region_length2) >= MIN_OVERLAP_COVERAGE * ov_length && ov_length >= MIN_OVERLAP_LENGTH){
-                    Duo_char *dd = malloc(sizeof(Duo_char));
+                    Duo_char dd;
 
                     char *r1  = g_array_index(read_ids, char *, first);
                     int f_len = strlen(r1);
-                    dd->first = substring(r1, 0, f_len-3);     //remove last two chars blahblah_0
+                    dd.first = substring(r1, 0, f_len-3);     //remove last two chars blahblah_0
 
                     char *r2  = g_array_index(read_ids, char *, second);
                     int s_len = strlen(r2);
-                    dd->second = substring(r2, 0, s_len-3);     //remove last two chars blahblah_0
+                    dd.second = substring(r2, 0, s_len-3);     //remove last two chars blahblah_0
 
                     int val[9];
                     val[0] = r1[f_len-1] - '0';
@@ -339,11 +339,10 @@ void find_overlap(int first, int second, offset_struct *current, FILE *fp
                     val[7] = end_ov2;
                     val[8] = ov_length;
 
-                    print_PAF_minimap(dd, val, fp);
+                    print_PAF_minimap(&dd, val, fp);
 
-                    free(dd->first);
-                    free(dd->second);
-                    free(dd);
+                    free(dd.first);
+                    free(dd.second);
                 }
             }
         }

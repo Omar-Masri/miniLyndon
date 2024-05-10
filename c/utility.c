@@ -219,13 +219,13 @@ void print_PAF(Duo_char *k, int *v, FILE *fp){
     int start2 = v[6];
     int end2 = v[7];
 
-    if(v[0] == 0){
+    if(v[0] == 1){
         int temp = start1;
         start1 = v[2] - end1;
         end1 = v[2] - temp;
     }
 
-    if(v[1] == 0){
+    if(v[1] == 1){
         int temp = start2;
         start2 = v[3] - end2;
         end2 = v[3] - temp;
@@ -246,13 +246,13 @@ void print_PAF_minimap(Duo_char *k, int *v, FILE *fp){
     int start2 = v[6];
     int end2 = v[7];
 
-    if(v[0] == 0){
+    if(v[0] == 1){
         int temp = start1;
         start1 = v[2] - end1;
         end1 = v[2] - temp;
     }
 
-    if(v[1] == 0){
+    if(v[1] == 1){
         int temp = start2;
         start2 = v[3] - end2;
         end2 = v[3] - temp;

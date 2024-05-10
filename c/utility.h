@@ -12,18 +12,18 @@
 #define W 15
 #define MIN_SUP_LENGTH 30
 #define MAX_K_FINGER_OCCURRENCE -1
-#define MIN_SHARED_K_FINGERS 4
-#define MIN_CHAIN_LENGTH 4
-#define MIN_REGION_K_FINGER_COVERAGE 0.50
-#define MAX_DIFF_REGION_PERCENTAGE 0.1
+#define MIN_SHARED_K_FINGERS 2
+#define MIN_CHAIN_LENGTH 1
+#define MIN_REGION_K_FINGER_COVERAGE 0.27
+#define MAX_DIFF_REGION_PERCENTAGE 0.0
 #define MIN_REGION_LENGTH 0
-#define MIN_OVERLAP_COVERAGE 0.27
+#define MIN_OVERLAP_COVERAGE 0.10
 #define MIN_OVERLAP_LENGTH 100
 
-#define NUM_THREADS 8
+#define NUM_THREADS 4
 
 #define INPUT stdin
-#define OUTPUT fopen("./overlaps-chr1.paf","w")
+#define OUTPUT fopen("./overlaps-ecoli.paf","w")
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
