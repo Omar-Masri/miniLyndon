@@ -1,5 +1,7 @@
 #include "alg3.h"
 #include "utility.h"
+#include <stdio.h>
+#include <string.h>
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -206,6 +208,8 @@ void *thread_matches(void *args) {
                     ,thread_args->lengths, thread_args->read_ids
                     ,thread_args->start, thread_args->end);
 
+    printf("start: %d  end: %d thread ended\n", thread_args->start, thread_args->end);
+
     pthread_exit(NULL);
 }
 
@@ -238,16 +242,18 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
 
         g_array_sort(Arr, compare_Triple_int);
 
-        //print_array_Triple_int(Arr);
-
         int start = 0;
         Triple_int *value;
         Triple_int *old_value = NULL;
         for(int end=0; end<Arr->len; end++){
             value = g_array_index(Arr, Triple_int *, end);
-            //printf("(%d,%d,%d)\n", value->first, value->second->value, value->third->second);
 
-            if((old_value != NULL && value->first != old_value->first) || end == Arr->len - 1){
+            bool new_subset = (old_value != NULL && value->first != old_value->first);
+
+            if(new_subset || end == Arr->len - 1){
+
+                if(end == Arr->len - 1 && !new_subset)
+                    end += 1;
 
                 if(end - start >= MIN_SHARED_K_FINGERS){
                     offset_struct o;
@@ -256,8 +262,6 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
 
                     o.number = score/k;
 
-                    //print_offset_struct(&o);
-
                     find_overlap(x, old_value->first, &o, fp, lenghts, read_ids);
 
                     //printf("\n score: %d", score);
@@ -265,15 +269,10 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
                 }
                 free_partial_GArray(Arr, start, end);
                 start = end;
-                old_value = NULL;
+                end -= 1;
             }
-            else{
-                old_value = value;
-            }
+            old_value = value;
         }
-
-        if(Arr->len)
-            free(g_array_index(Arr, Triple_int *, Arr->len-1));
 
         g_array_free(Arr, TRUE);
         free_garray_of_pointers(current);
@@ -283,7 +282,6 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
 void find_overlap(int first, int second, offset_struct *current, FILE *fp
                   , GArray *lenghts, GArray *read_ids) {
     if(current->number >= MIN_CHAIN_LENGTH){
-        if(current->right_offset2 >= current->left_offset2){
 
             //length offset for left fingerprint
             int upstream_length1 = current->left_index_offset1;
@@ -310,7 +308,8 @@ void find_overlap(int first, int second, offset_struct *current, FILE *fp
                 int start_ov1 = upstream_length1 - min_up;
                 int start_ov2 = upstream_length2 - min_up;
 
-                int min_down = min(read1_length-(upstream_length1+region_length1), read2_length-(upstream_length2+region_length2));
+                int min_down = min(read1_length-(upstream_length1+region_length1)
+                                   , read2_length-(upstream_length2+region_length2));
 
                 int end_ov1 = upstream_length1 + region_length1 + min_down;
                 int end_ov2 = upstream_length2 + region_length2 + min_down;
@@ -345,12 +344,18 @@ void find_overlap(int first, int second, offset_struct *current, FILE *fp
                     free(dd.second);
                 }
             }
-        }
     }
 
 }
 
 int main(void){
+
+    // Check if the file exists
+    if (remove(OUTPUT_FILE_NAME) == 0) {
+        printf("File '%s' successfully removed.\n", OUTPUT_FILE_NAME);
+    }
+
+
     struct rusage usage;
     double convert = 1e-6;
     FILE *fp;
@@ -358,7 +363,6 @@ int main(void){
     ssize_t read = 0;
     char *line = NULL;
     size_t len = 0;
-
     clock_t begin_total = clock();
 
     fp = INPUT;
@@ -476,6 +480,7 @@ int main(void){
         pthread_join(threads[i], NULL);
     }
 
+    pthread_mutex_destroy(&mutex);
     g_array_free(minimizers, TRUE);
 
     g_hash_table_foreach(k_finger_occurrences, free_key_occurrences, NULL);

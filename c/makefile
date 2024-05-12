@@ -14,7 +14,7 @@ OPTIMIZATION = -Ofast
 
 CXXFLAGS = -m64 $(OPTIMIZATION)
 
-CFLAGS = `pkg-config --cflags glib-2.0` $(OPTIMIZATION)
+CFLAGS = `pkg-config --cflags glib-2.0` $(OPTIMIZATION) -g
 
 SRC_FILES_C = alg3.c utility.c fragments.c
 

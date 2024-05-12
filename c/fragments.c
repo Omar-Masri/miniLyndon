@@ -154,7 +154,7 @@ static GArray* merge_arrays(GArray *arr1, GArray *arr2) {
     return merged_array;
 }
 
-int  maximal_colinear_subset(GArray *array, int start, int end, int k, offset_struct *o){
+int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_struct *o){
 
     GArray *Points_s = g_array_new(FALSE, FALSE, sizeof(Point_int *));
     GArray *Points_e = g_array_new(FALSE, FALSE, sizeof(Point_int *));

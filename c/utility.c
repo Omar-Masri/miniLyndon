@@ -165,7 +165,7 @@ void print_array_Triple_int(GArray *array) {
     printf("Array contents:\n");
     for (guint i = 0; i < array->len; i++) {
         Triple_int *s = g_array_index(array, Triple_int *, i);
-        printf("(%d,%d,%d)\n", s->first, s->second->index_offset, s->third->second);
+        printf("(%d,%d,%d)\n", s->first, s->second->value, s->third->second);
     }
     printf("\n");
 }
@@ -261,8 +261,14 @@ void print_PAF_minimap(Duo_char *k, int *v, FILE *fp){
     int strand = v[0] ^ v[1];
 
     pthread_mutex_lock(&mutex);
+
+    //FILE *file = OUTPUT;
+
     fprintf(fp, "%s\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%d\n", k->first, v[2], start1,
             end1, !strand ? '+' : '-' , k->second, v[3], start2, end2, strand);
+
+    //fclose(file);
+
     pthread_mutex_unlock(&mutex);
 }
 

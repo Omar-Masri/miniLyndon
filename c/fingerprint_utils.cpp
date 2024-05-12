@@ -151,8 +151,8 @@ void extract_long_reads(Args args, string name_file, int remainder) {
 
                     mtx.lock();
 
-                    cout << f_original;
-                    cout << f_rc;
+                    cout << f_original << std::flush;
+                    cout << f_rc << std::flush;
 
                     mtx.unlock();
                 }
