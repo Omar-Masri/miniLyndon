@@ -8,9 +8,9 @@
 #include <stdint.h>
 #include <sys/resource.h>
 
-#define K 7
-#define W 15
-#define MIN_SUP_LENGTH 30
+#define K 5
+#define W 10
+#define MIN_SUP_LENGTH 15
 #define MAX_K_FINGER_OCCURRENCE -1
 #define MIN_SHARED_K_FINGERS 3
 #define MIN_CHAIN_LENGTH 2

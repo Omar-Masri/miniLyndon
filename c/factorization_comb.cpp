@@ -167,7 +167,7 @@ vector<string> icfl_(const string& w) {
     Altrimenti, viene combinato con m1' e la fattorizzazione di v.  */
     string x, y;
     //Trova il prefisso più lungo di w che è un'estensione limitata a destra di un suffisso di w
-    tie(x, y) = find_prefix(w); //strarre i valori restituiti dalla funzione find_prefix(w) e assegnarli alle variabili x e y.
+    tie(x, y) = find_prefix(w); //estrarre i valori restituiti dalla funzione find_prefix(w) e assegnarli alle variabili x e y.
 
     // Se il prefisso trovato è w stesso, significa che w è già una inverse Lyndon word
     if (x == w + "0") {
@@ -226,7 +226,7 @@ vector<string> cfl_icfl_(const string& w, int cfl_max = 30) {
 }
 
 
-//prende in input una sequenza 'seq', un algoritmo 'alg' per la fattorizzazione e un parametro 'k'.
+//prende in input una sequenza 'seq',e un parametro 'k' per la fattorizzazione.
 vector<string> d_duval_(const string& seq, int k) {
     vector<int> factors1;
     for (string factor : cfl_icfl_(seq, k))

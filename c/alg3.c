@@ -338,7 +338,7 @@ void find_overlap(int first, int second, offset_struct *current, FILE *fp
                     val[7] = end_ov2;
                     val[8] = ov_length;
 
-                    print_PAF_minimap(&dd, val, fp);
+                    print_PAF(&dd, val, fp);
 
                     free(dd.first);
                     free(dd.second);
