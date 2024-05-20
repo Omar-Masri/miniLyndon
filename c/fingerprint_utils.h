@@ -11,7 +11,6 @@ using namespace std;
 
 // Definizione di una struttura per memorizzare gli argomenti
 struct Args {
-    string type = "1f_np";
     string path = "training/";
     string type_factorization = "CFL";
     string fasta = "transcript_genes.fa";
@@ -19,7 +18,6 @@ struct Args {
     string fact = "create";
     string shift = "shift";
     string filter = "list";
-    string debug = "NO";
     int n = 1;
 };
 
