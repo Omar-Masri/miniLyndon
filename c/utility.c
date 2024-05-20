@@ -23,7 +23,6 @@ char* substring(const char* str, int start, int end) {
 }
 
 gboolean compare_arrays(GArray *array1, int s1, int s2, int k) {
-
     for (guint i = 0; i < k; i++) {
         int element1 = g_array_index(array1, int, s1+i);
         int element2 = g_array_index(array1, int, s2+i);
@@ -35,7 +34,6 @@ gboolean compare_arrays(GArray *array1, int s1, int s2, int k) {
             return -1;
         }
     }
-
 
     return 0;
 }

@@ -10,7 +10,7 @@
 
 #define K 7
 #define W 15
-#define MIN_SUP_LENGTH 30
+#define MIN_SUP_LENGTH 25
 #define MAX_K_FINGER_OCCURRENCE -1
 #define MIN_SHARED_K_FINGERS 3
 #define MIN_CHAIN_LENGTH 2
@@ -62,10 +62,10 @@ typedef struct {
 typedef struct {
     unsigned int left_offset1;
     unsigned int left_index_offset1;
-    unsigned int left_supp_length1;     // you can remove this
+    unsigned int left_supp_length1;     // you can remove this TODO
     unsigned int left_offset2;
     unsigned int left_index_offset2;
-    unsigned int left_supp_length2;     // you can remove this
+    unsigned int left_supp_length2;     // you can remove this TODO
     unsigned int right_offset1;
     unsigned int right_index_offset1;
     unsigned int right_supp_length1;

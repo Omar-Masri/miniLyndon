@@ -264,9 +264,8 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
 
                     find_overlap(x, old_value->first, &o, fp, lenghts, read_ids);
 
-                    //printf("\n score: %d", score);
-
                 }
+
                 free_partial_GArray(Arr, start, end);
                 start = end;
                 end -= 1;
@@ -349,12 +348,10 @@ void find_overlap(int first, int second, offset_struct *current, FILE *fp
 }
 
 int main(void){
-
     // Check if the file exists
     if (remove(OUTPUT_FILE_NAME) == 0) {
         printf("File '%s' successfully removed.\n", OUTPUT_FILE_NAME);
     }
-
 
     struct rusage usage;
     double convert = 1e-6;
