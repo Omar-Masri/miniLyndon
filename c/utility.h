@@ -20,7 +20,7 @@
 #define MIN_OVERLAP_COVERAGE 0.10
 #define MIN_OVERLAP_LENGTH 100
 
-#define NUM_THREADS 4
+#define NUM_THREADS 6
 
 #define INPUT stdin
 #define OUTPUT_FILE_NAME "./overlaps-noerr.paf"

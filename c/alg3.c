@@ -387,7 +387,7 @@ int main(void){
     int partition_size = minimizers->len / NUM_THREADS;
 
     for (int i = 0; i < NUM_THREADS; ++i) {
-        move += minimizers->len / (2 << i);   //geometric series
+        move += minimizers->len / (2.5 * (i+1));   //geometric series
         args[i].end = (i == 0) ? (minimizers->len - 1) : (args[i-1].start - 1);
         args[i].start = (i == NUM_THREADS - 1) ? 0 : minimizers->len - move;
 
@@ -410,6 +410,8 @@ int main(void){
         pthread_join(threads[i], NULL);
     }
 
+    // you can comment this part
+
     pthread_mutex_destroy(&mutex);
     g_array_free(minimizers, TRUE);
 
@@ -417,6 +419,7 @@ int main(void){
     g_hash_table_destroy(k_finger_occurrences);
     g_array_free(lengths, TRUE);
     free_garray_string(read_ids);
+
 
     clock_t end_total = clock();
 
