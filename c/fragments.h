@@ -4,6 +4,8 @@
 #include "utility.h"
 
 /* opaque glib structures */
+#define MAX_GTREE_HEIGHT 40
+
 typedef struct _GTreeNode GTreeNode;
 
 struct _GTree
@@ -29,29 +31,33 @@ struct _GTreeNode
 };
 
 typedef struct Point_int Point_int;
-typedef struct Fragment Fragment;
+typedef struct Fragment_Cartesian Fragment_Cartesian;
+/* opaque glib structures */
 
 struct Point_int {
     bool type;
-    Fragment *fragment;
-    unsigned first;
-    unsigned second;
+    Fragment_Cartesian *fragment;
+    int first;
+    int second;
 };
 
-struct Fragment {
+struct Fragment_Cartesian {
     Point_int *start;
     Point_int *end;
-    Fragment *prec;
-    Triple_int *triple;
+    Fragment_Cartesian *prec;
+    Triple_fragment *triple;
     int score;
 };
 
-int compare_Point_int(const void *f, const void *s);
-
+gboolean g_tree_steal_lower_bound(GTree *tree, gconstpointer key, int q_score);
 void print_Point_int(const Point_int *point);
-
 void print_array_Point_int(GArray *array);
-
+Point_int* new_Point_int(int first, int second, bool type, Fragment_Cartesian *fragment);
+gint compare_keys(gconstpointer a, gconstpointer b, gpointer userdata);
+GTreeNode* previous(GTree *tree, gconstpointer key);
+int get_score(Point_int *point);
+void activate_Point_int(GTree *D, Point_int *point);
+Point_int* RMQ(GTree *D, Point_int *point);
 int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_struct *o);
 
 #endif // FRAGMENTS_H_

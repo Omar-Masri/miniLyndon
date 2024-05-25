@@ -5,16 +5,14 @@ extern pthread_mutex_t mutex;
 char* substring(const char* str, int start, int end) {
     int len = strlen(str);
 
-    if (start < 0 || end < start || end >= len) {
+    if (start < 0 || end < start || end >= len)
         return NULL;
-    }
 
     int sub_len = end - start + 1;
 
     char* sub = (char*)malloc((sub_len + 1) * sizeof(char));
-    if (sub == NULL) {
+    if (sub == NULL)
         return NULL;
-    }
 
     strncpy(sub, str + start, sub_len);
     sub[sub_len] = '\0';
@@ -27,33 +25,31 @@ gboolean compare_arrays(GArray *array1, int s1, int s2, int k) {
         int element1 = g_array_index(array1, int, s1+i);
         int element2 = g_array_index(array1, int, s2+i);
 
-
-        if (element1 > element2) {
+        if (element1 > element2)
             return 1;
-        } else if (element1 < element2) {
+        else if (element1 < element2)
             return -1;
-        }
     }
 
     return 0;
 }
 
 void print_Element(Element *el){
-    printf("Element: value %d, fingerprint: %s", el->value, el->fingerprint);
+    fprintf(stderr,"Element: value %d, fingerprint: %s", el->value, el->fingerprint);
 }
 
-void print_Duo_int(Duo_int *du){
+void print_Occurrence(Occurrence *du){
     if(du == NULL)
-        printf("NULL");
+        fprintf(stderr,"NULL");
     else
-        printf("(%d, %d, %d, %d)", du->first, du->second, du->third, du->fourth);
+        fprintf(stderr,"(%d, %d, %d, %d)", du->first, du->second, du->third, du->fourth);
 }
 
 void print_offset_struct(offset_struct *of){
     if(of == NULL)
-        printf("NULL");
+        fprintf(stderr,"NULL");
     else
-        printf("[%d, (%d, %d), %d, (%d, %d) %d, (%d, %d), %d, (%d, %d) | %d]",
+        fprintf(stderr,"[%d, (%d, %d), %d, (%d, %d) %d, (%d, %d), %d, (%d, %d) | %d]",
                of->left_offset1, of->left_index_offset1, of->left_supp_length1,
                of->left_offset2, of->left_index_offset2, of->left_supp_length2,
                of->right_offset1,of->right_index_offset1, of->right_supp_length1,
@@ -62,14 +58,12 @@ void print_offset_struct(offset_struct *of){
 }
 
 bool is_numeric(const char *str) {
-    if (str == NULL || *str == '\0') {
+    if (str == NULL || *str == '\0')
         return false;
-    }
 
     for (int i = 0; str[i] != '\0'; i++) {
-        if (!(str[i] >= '0' && str[i] <= '9')) {
+        if (!(str[i] >= '0' && str[i] <= '9'))
             return false;
-        }
     }
 
     return true;
@@ -124,48 +118,48 @@ Element *fetch(GQueue *queue, int T) {
 
 void print_queue(GQueue *queue) {
     if (queue == NULL || g_queue_is_empty(queue)) {
-        printf("Queue is empty\n");
+        fprintf(stderr,"Queue is empty\n");
         return;
     }
 
     GList *current = queue->head;
-    printf("Queue contents: ");
+    fprintf(stderr,"Queue contents: ");
     while (current != NULL) {
         Element *s = (Element *)current->data;
-        printf("%d ", s->value);
+        fprintf(stderr,"%d ", s->value);
         current = current->next;
     }
-    printf("\n");
+    fprintf(stderr,"\n");
 }
 
-void print_array_Duo_int(GArray *array) {
+void print_array_Occurrence(GArray *array) {
 
     if (array == NULL || array->len == 0) {
-        printf("Array is empty\n");
+        fprintf(stderr,"Array is empty\n");
         return;
     }
 
-    printf("Array contents:\n");
+    fprintf(stderr,"Array contents:\n");
     for (guint i = 0; i < array->len; i++) {
-        Duo_int *s = g_array_index(array, Duo_int *, i);
-        printf("(%d,%d)\n", s->first, s->second);
+        Occurrence *s = g_array_index(array, Occurrence *, i);
+        fprintf(stderr,"(%d,%d)\n", s->first, s->second);
     }
-    printf("\n");
+    fprintf(stderr,"\n");
 }
 
-void print_array_Triple_int(GArray *array) {
+void print_array_Triple_fragment(GArray *array) {
 
     if (array == NULL || array->len == 0) {
-        printf("Array is empty\n");
+        fprintf(stderr,"Array is empty\n");
         return;
     }
 
-    printf("Array contents:\n");
+    fprintf(stderr,"Array contents:\n");
     for (guint i = 0; i < array->len; i++) {
-        Triple_int *s = g_array_index(array, Triple_int *, i);
-        printf("(%d,%d,%d)\n", s->first, s->second->value, s->third->second);
+        Triple_fragment *s = g_array_index(array, Triple_fragment *, i);
+        fprintf(stderr,"(%d,%d,%d)\n", s->first, s->second->value, s->third->second);
     }
-    printf("\n");
+    fprintf(stderr,"\n");
 }
 
 static inline guint32 murmur_hash_32(uint32_t key) {
@@ -177,25 +171,14 @@ static inline guint32 murmur_hash_32(uint32_t key) {
     return key;
 }
 
-guint duo_int_hash(gconstpointer key) {
-    const Duo_int *point = (const Duo_int *)key;
+guint Occurrence_hash(gconstpointer key) {
+    const Occurrence *point = (const Occurrence *)key;
     return murmur_hash_32(point->first)*33 ^ murmur_hash_32(point->second);    // mamma mia sto errore >:(
 }
 
-gboolean duo_int_equal(gconstpointer a, gconstpointer b) {
-    const Duo_int *point1 = (const Duo_int *)a;
-    const Duo_int *point2 = (const Duo_int *)b;
-    return point1->first == point2->first && point1->second == point2->second;
-}
-
-guint tuple_int_hash(gconstpointer key) {
-    const Tuple_int *point = (const Tuple_int *)key;
-    return murmur_hash_32(point->first)*33 ^ murmur_hash_32(point->second);    // mamma mia sto errore >:(
-}
-
-gboolean tuple_int_equal(gconstpointer a, gconstpointer b) {
-    const Tuple_int *point1 = (const Tuple_int *)a;
-    const Tuple_int *point2 = (const Tuple_int *)b;
+gboolean Occurrence_equal(gconstpointer a, gconstpointer b) {
+    const Occurrence *point1 = (const Occurrence *)a;
+    const Occurrence *point2 = (const Occurrence *)b;
     return point1->first == point2->first && point1->second == point2->second;
 }
 
@@ -232,7 +215,9 @@ void print_PAF(Duo_char *k, int *v, FILE *fp){
     int strand = v[0] ^ v[1];
 
     pthread_mutex_lock(&mutex);
+
     fprintf(fp, "%s\t%d\t%d\t%d\t%s\t%d\t%d\t%d\t%d\n", k->first, v[2], start1, end1, k->second, v[3], start2, end2, strand);
+
     pthread_mutex_unlock(&mutex);
 }
 
@@ -260,12 +245,8 @@ void print_PAF_minimap(Duo_char *k, int *v, FILE *fp){
 
     pthread_mutex_lock(&mutex);
 
-    //FILE *file = OUTPUT;
-
     fprintf(fp, "%s\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%d\n", k->first, v[2], start1,
             end1, !strand ? '+' : '-' , k->second, v[3], start2, end2, strand);
-
-    //fclose(file);
 
     pthread_mutex_unlock(&mutex);
 }
@@ -289,13 +270,13 @@ void free_garray_of_pointers(GArray *array) {
     g_array_free(array, TRUE); // Free the GArray itself
 }
 
-void free_garray_duo_int(GArray *array) {
+void free_garray_Occurrence(GArray *array) {
     if (array == NULL) {
         return;
     }
 
     for (guint i = 0; i < array->len; i++) {
-        Duo_int *element = g_array_index(array, Duo_int *, i);
+        Occurrence *element = g_array_index(array, Occurrence *, i);
         free(element);
     }
 
@@ -322,7 +303,7 @@ void free_key_value(gpointer key, gpointer value, gpointer user_data) {
 
 void free_key_occurrences(gpointer key, gpointer value, gpointer user_data) {
     free((char *)key);
-    free_garray_duo_int(value);
+    free_garray_Occurrence(value);
 }
 
 void free_key_overlaps(gpointer key, gpointer value, gpointer user_data) {

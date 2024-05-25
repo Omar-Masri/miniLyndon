@@ -8,15 +8,9 @@
 #include <stdint.h>
 #include <sys/resource.h>
 
-<<<<<<< HEAD
 #define K 7
 #define W 15
 #define MIN_SUP_LENGTH 25
-=======
-#define K 5
-#define W 10
-#define MIN_SUP_LENGTH 15
->>>>>>> origin/main
 #define MAX_K_FINGER_OCCURRENCE -1
 #define MIN_SHARED_K_FINGERS 3
 #define MIN_CHAIN_LENGTH 2
@@ -30,16 +24,16 @@
 
 #define INPUT stdin
 #define OUTPUT_FILE_NAME "./overlaps-noerr.paf"
-#define OUTPUT fopen(OUTPUT_FILE_NAME,"a")
+#define OUTPUT stdout
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 
 typedef struct {
     unsigned value;
-    char* fingerprint;
     unsigned k_finger;
     unsigned index_offset;
+    char* fingerprint;
 } Element;
 
 typedef struct {
@@ -47,12 +41,7 @@ typedef struct {
     unsigned second;
     unsigned third;
     unsigned fourth;
-} Duo_int;
-
-typedef struct {
-    unsigned first;
-    unsigned second;
-} Tuple_int;
+} Occurrence;
 
 typedef struct {
     char *first;
@@ -62,8 +51,8 @@ typedef struct {
 typedef struct {
     int first;
     Element *second;
-    Duo_int *third;
-} Triple_int;
+    Occurrence *third;
+} Triple_fragment;
 
 typedef struct {
     unsigned int left_offset1;
@@ -90,32 +79,40 @@ typedef struct {
 char* substring(const char* str, int start, int end);
 gboolean compare_arrays(GArray *array1, int s1, int s2, int k);
 void print_Element(Element *el);
-void print_Duo_int(Duo_int *du);
+void print_Occurrence(Occurrence *du);
 void print_offset_struct(offset_struct *of);
 bool is_numeric(const char *str);
 int supporting_length(GArray *array, int i, int k);
 void insert(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k);
 void insertLex(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k);
-Element *fetch(GQueue *queue, int T);
+Element* fetch(GQueue *queue, int T);
 void print_queue(GQueue *queue);
-void print_array_Duo_int(GArray *array);
-void print_array_Triple_int(GArray *array);
-static inline guint32 murmur_hash_32(uint32_t key);
-guint duo_int_hash(gconstpointer key);
-gboolean duo_int_equal(gconstpointer a, gconstpointer b);
-guint tuple_int_hash(gconstpointer key);
-gboolean tuple_int_equal(gconstpointer a, gconstpointer b);
+void print_array_Occurrence(GArray *array);
+void print_array_Triple_fragment(GArray *array);
+guint Occurrence_hash(gconstpointer key);
+gboolean Occurrence_equal(gconstpointer a, gconstpointer b);
 guint duo_char_hash(gconstpointer key);
 gboolean duo_char_equal(gconstpointer a, gconstpointer b);
 void print_PAF(Duo_char *k, int *v, FILE *fp);
 void print_PAF_minimap(Duo_char *k, int *v, FILE *fp);
-void free_garray_duo_int(GArray *array);
+void free_partial_GArray(GArray *array, int start, int end);
+void free_garray_of_pointers(GArray *array);
+void free_garray_Occurrence(GArray *array);
 void free_garray_string(GArray *array);
 void free_key_value(gpointer key, gpointer value, gpointer user_data);
 void free_key_occurrences(gpointer key, gpointer value, gpointer user_data);
 void free_key_overlaps(gpointer key, gpointer value, gpointer user_data);
 void calculate_usage(struct rusage *usage);
-void free_partial_GArray(GArray *array, int start, int end);
-void free_garray_of_pointers(GArray *array);
+
+inline void *mymalloc(size_t size){
+    void *result = malloc(size);
+
+    if(result == NULL){
+        fprintf(stderr, "unable to manually allocate memory!");
+        exit(1);
+    }
+
+    return result;
+}
 
 #endif // UTILITY_H_
