@@ -49,7 +49,6 @@ typedef struct {
 } Duo_char;
 
 typedef struct {
-    int first;
     Element *second;
     Occurrence *third;
 } Triple_fragment;
@@ -75,6 +74,14 @@ typedef struct {
     GArray *lenghts;
     GArray *read_ids;
 } User_data;
+
+typedef struct {
+    unsigned x;
+    unsigned k;
+    FILE *fp;
+    GArray *lenghts;
+    GArray *read_ids;
+} Iterate_data;
 
 char* substring(const char* str, int start, int end);
 gboolean compare_arrays(GArray *array1, int s1, int s2, int k);

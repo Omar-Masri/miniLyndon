@@ -1,4 +1,5 @@
 #include "alg3.h"
+#include "glibconfig.h"
 #include "utility.h"
 #include <stdio.h>
 #include <string.h>
@@ -87,23 +88,6 @@ static inline gboolean filter_hash_table(restrict gpointer key, restrict gpointe
     free_garray_Occurrence(value);
 
     return TRUE;
-}
-
-static inline int compare_Triple_fragment(const void *f, const void *s) {
-    Triple_fragment *a = *((Triple_fragment **)f);
-    Triple_fragment *b = *((Triple_fragment **)s);
-
-    if (a->first < b->first)
-        return -1;
-    if (a->first > b->first)
-        return 1;
-
-    if (a->second->value < b->second->value)
-        return -1;
-    if (a->second->value > b->second->value)
-        return 1;
-
-    return 0;
 }
 
 GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i, int k),
@@ -196,11 +180,25 @@ void *thread_matches(void *args) {
     pthread_exit(NULL);
 }
 
+void iterate_hash_table(gpointer key, gpointer value, gpointer user_data) {
+    Iterate_data *data = (Iterate_data *)user_data;
+    GArray *group = (GArray *)value;
+
+    if(group->len >= MIN_SHARED_K_FINGERS){
+        offset_struct o;
+        int score = maximal_colinear_subset(group, 0, group->len, data->k, &o);
+        o.number = score/data->k;
+        find_overlap(data->x, GPOINTER_TO_INT(key), &o, data->fp, data->lenghts, data->read_ids);
+    }
+    free_partial_GArray(group, 0, group->len);
+    g_array_free(group, TRUE);
+}
+
 void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k, FILE *fp
                       ,GArray *lenghts, GArray *read_ids, int start_thread, int end_thread){
     for(int x=start_thread; x<=end_thread; x++){
         GArray *current = g_array_index(minimizers, GArray *, x);
-        GArray *Arr = g_array_new(FALSE, FALSE, sizeof(Triple_fragment *));
+        GHashTable *G = g_hash_table_new(g_direct_hash, g_direct_equal);
         for(int y=0; y < current->len; y++){
             Element *current_element = g_array_index(current, Element *, y);
             GArray *occ_list = (GArray *)g_hash_table_lookup(k_finger_occurrences, current_element->fingerprint);
@@ -214,44 +212,30 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
                 if(value->first <= x)
                     continue;
 
+                GArray *retrived = g_hash_table_lookup(G, GINT_TO_POINTER(value->first));
+
+                if(retrived == NULL)
+                    retrived = g_array_new(FALSE, FALSE, sizeof(Triple_fragment *));
+
                 Triple_fragment *new = mymalloc(sizeof(Triple_fragment));
-                new->first = value->first;
                 new->second = current_element;
                 new->third = value;
 
-                g_array_append_val(Arr, new);
+                g_array_append_val(retrived, new);
+                g_hash_table_insert(G, GINT_TO_POINTER(value->first), retrived);
             }
         }
 
-        g_array_sort(Arr, compare_Triple_fragment);
+        Iterate_data occ;
+        occ.x = x;
+        occ.k = k;
+        occ.fp = fp;
+        occ.lenghts = lenghts;
+        occ.read_ids = read_ids;
 
-        int start = 0;
-        Triple_fragment *value;
-        Triple_fragment *old_value = NULL;
-        for(int end=0; end<Arr->len; end++){
-            value = g_array_index(Arr, Triple_fragment *, end);
-            bool new_subset = (old_value != NULL && value->first != old_value->first);
+        g_hash_table_foreach(G, iterate_hash_table, &occ);
 
-            if(new_subset || end == Arr->len - 1){
-
-                if(end == Arr->len - 1 && !new_subset)
-                    end += 1;
-
-                if(end - start >= MIN_SHARED_K_FINGERS){
-                    offset_struct o;
-                    int score = maximal_colinear_subset(Arr, start, end, k, &o);
-                    o.number = score/k;
-                    find_overlap(x, old_value->first, &o, fp, lenghts, read_ids);
-                }
-
-                free_partial_GArray(Arr, start, end);
-                start = end;
-                end -= 1;
-            }
-            old_value = value;
-        }
-
-        g_array_free(Arr, TRUE);
+        g_hash_table_destroy(G);
         free_garray_of_pointers(current);
     }
 }

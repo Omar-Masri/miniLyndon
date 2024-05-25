@@ -157,7 +157,7 @@ void print_array_Triple_fragment(GArray *array) {
     fprintf(stderr,"Array contents:\n");
     for (guint i = 0; i < array->len; i++) {
         Triple_fragment *s = g_array_index(array, Triple_fragment *, i);
-        fprintf(stderr,"(%d,%d,%d)\n", s->first, s->second->value, s->third->second);
+        fprintf(stderr,"(%d,%d)\n", s->second->value, s->third->second);
     }
     fprintf(stderr,"\n");
 }
