@@ -375,7 +375,7 @@ static GArray* merge_arrays(GArray *arr1, GArray *arr2) {
 }
 
 static inline gboolean print_key_value(gpointer key, gpointer value, gpointer user_data) {
-    g_print("%d\n", GPOINTER_TO_INT(key)); // Assuming keys are strings
+    fprintf(stderr,"%d\n", GPOINTER_TO_INT(key)); // Assuming keys are strings
     return FALSE; // Continue traversing
 }
 
@@ -400,23 +400,23 @@ g_tree_steal_lower_bound (GTree         *tree,
 // end  opaque functions
 
 void print_Point_int(const Point_int *point) {
-    printf("Fragment %p, Type: %s, (%u, %u)\n", point->fragment, point->type ? "True" : "False"
+    fprintf(stderr,"Fragment %p, Type: %s, (%u, %u)\n", point->fragment, point->type ? "True" : "False"
            ,point->first, point->second);
 }
 
 void print_array_Point_int(GArray *array) {
 
     if (array == NULL || array->len == 0) {
-        printf("Array is empty\n");
+        fprintf(stderr,"Array is empty\n");
         return;
     }
 
-    printf("Array contents:\n");
+    fprintf(stderr,"Array contents:\n");
     for (guint i = 0; i < array->len; i++) {
         Point_int *s = g_array_index(array, Point_int *, i);
         print_Point_int(s);
     }
-    printf("\n");
+    fprintf(stderr,"\n");
 }
 
 Point_int *new_Point_int(int first, int second, bool type, Fragment_Cartesian *fragment){
