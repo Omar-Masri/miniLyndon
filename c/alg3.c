@@ -16,6 +16,16 @@ typedef struct {
     GArray *read_ids;
 } ThreadArgs;
 
+static inline int findn(int num)
+{
+   if ( num < 10 )
+      return 1;
+   if ( num < 100 )
+      return 2;
+   else
+       return 3;
+}
+
 static GArray* get_k_fingers(char *line, char **read_id){
     GArray *array = g_array_new(FALSE, FALSE, sizeof(int));
 
@@ -46,10 +56,9 @@ static char *k_finger_to_string(GArray *array, int i, int k, const char *separat
     size_t total_length = 0;
     int separator_length = strlen(separator);
     for (int x = i; x < i+k; x++) {
-        int number_length = snprintf(NULL, 0, "%d", g_array_index(array, int, x));
-        if (number_length < 0) {
+        int number_length = findn(g_array_index(array, int, x));
+        if (number_length < 0)
             return NULL;
-        }
         total_length += number_length+separator_length;
     }
     total_length -= separator_length;
