@@ -245,8 +245,8 @@ void print_PAF_minimap(Duo_char *k, int *v, FILE *fp){
 
     pthread_mutex_lock(&mutex);
 
-    fprintf(fp, "%s\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%d\n", k->first, v[2], start1,
-            end1, !strand ? '+' : '-' , k->second, v[3], start2, end2, strand);
+    fprintf(fp, "%s\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%d\t%d\n", k->first, v[2], start1,
+            end1, !strand ? '+' : '-' , k->second, v[3], start2, end2, v[8], v[8]);
 
     pthread_mutex_unlock(&mutex);
 }
