@@ -35,7 +35,7 @@ gboolean compare_arrays(GArray *array1, int s1, int s2, int k) {
 }
 
 void print_Element(Element *el){
-    fprintf(stderr,"Element: value %d, fingerprint: %s", el->value, el->fingerprint);
+    fprintf(stderr,"Element: value %d, fingerprint: %lu", el->value, el->fingerprint);
 }
 
 void print_Occurrence(Occurrence *du){
@@ -69,6 +69,36 @@ bool is_numeric(const char *str) {
     return true;
 }
 
+unsigned int djb2(GArray *array, int i, int k)
+{
+	/* This is the djb2 string hash function */
+
+	unsigned int result = 5381;
+	int c;
+
+	for(int x=i; x<i+k; x++){
+        c = g_array_index(array, int, x);
+		result = (result << 5) + result + c;
+	}
+
+	return result;
+}
+
+/* D. J. Bernstein hash function */
+unsigned long bernstein(GArray *array, int i, int k)
+{
+    unsigned long hash = 5381;
+    int c;
+
+    for(int x=i; x<i+k; x++){
+        c = g_array_index(array, int, x);
+        hash = 33 * hash ^ (unsigned char) c;
+    }
+
+    return hash;
+}
+
+
 int supporting_length(GArray *array, int i, int k){
     if(array == NULL)
         return 0;
@@ -87,7 +117,7 @@ void insert(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, 
 
         Element *value = (Element *)g_queue_pop_tail(queue);
 
-        if(value->fingerprint == NULL)
+        if(value->fingerprint == 0)
             free(value);
     }
     g_queue_push_tail(queue, X);
@@ -100,7 +130,7 @@ void insertLex(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *arra
 
         Element *value = (Element *)g_queue_pop_tail(queue);
 
-        if(value->fingerprint == NULL)
+        if(value->fingerprint == 0)
             free(value);
     }
     g_queue_push_tail(queue, X);
@@ -110,7 +140,7 @@ Element *fetch(GQueue *queue, int T) {
     while (!g_queue_is_empty(queue) && ((Element *)g_queue_peek_head(queue))->value < T) {
         Element *value = (Element *)g_queue_pop_head(queue);
 
-        if(value->fingerprint == NULL)
+        if(value->fingerprint == 0)
             free(value);
     }
     return (Element *)g_queue_peek_head(queue);
@@ -302,7 +332,7 @@ void free_key_value(gpointer key, gpointer value, gpointer user_data) {
 }
 
 void free_key_occurrences(gpointer key, gpointer value, gpointer user_data) {
-    free((char *)key);
+    //free((char *)key);
     free_garray_Occurrence(value);
 }
 
@@ -319,4 +349,25 @@ void calculate_usage(struct rusage *usage){
         fprintf(stderr, "Failed to get memory usage.\n");
         exit(1);
     }
+}
+
+unsigned long read_off_memory_status()
+{
+  unsigned long dummy;
+  const char* statm_path = "/proc/self/statm";
+  unsigned long size,resident,share,text,lib,data,dt;
+
+  FILE *f = fopen(statm_path,"r");
+  if(!f){
+    perror(statm_path);
+    abort();
+  }
+  if(7 != fscanf(f,"%ld %ld %ld %ld %ld %ld %ld",
+    &size,&resident,&share,&text,&lib,&data,&dt))
+  {
+    perror(statm_path);
+    abort();
+  }
+  fclose(f);
+  return size;
 }

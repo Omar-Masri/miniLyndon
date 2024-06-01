@@ -1,4 +1,5 @@
 #include "alg3.h"
+#include "glibconfig.h"
 #include "utility.h"
 #include <stdio.h>
 #include <string.h>
@@ -47,46 +48,6 @@ static GArray* get_k_fingers(char *line, char **read_id){
     return array;
 }
 
-static char *k_finger_to_string(GArray *array, int i, int k, const char *separator) {
-
-    if (array == NULL || separator == NULL) {
-        return NULL;
-    }
-
-    size_t total_length = 0;
-    int separator_length = strlen(separator);
-    for (int x = i; x < i+k; x++) {
-        int number_length = findn(g_array_index(array, int, x));
-        if (number_length < 0)
-            return NULL;
-        total_length += number_length+separator_length;
-    }
-    total_length -= separator_length;
-
-    char *result = (char *)mymalloc(total_length + 1);
-    if (result == NULL) {
-        return NULL;
-    }
-
-    int offset = 0;
-    for (int x = i; x < i+k; x++) {
-        int chars_written = snprintf(result + offset, total_length - offset + 1, "%d",
-                                     g_array_index(array, int, x));
-        if (chars_written < 0 || chars_written > total_length - offset) {
-            free(result);
-            return NULL;
-        }
-        offset += chars_written;
-        if (x < i + k - 1) {
-            // Append separator if not the last element
-            strcpy(result + offset, separator);
-            offset += separator_length;
-        }
-    }
-
-    return result;
-}
-
 static inline gboolean filter_hash_table(restrict gpointer key, restrict gpointer value, gpointer user_data) {
     GArray *val = (GArray *)value;
     if(val->len > 1 && (MAX_K_FINGER_OCCURRENCE == -1 || val->len <= MAX_K_FINGER_OCCURRENCE))
@@ -129,7 +90,7 @@ GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i,
         length += k_finger;
 
         el->value = x;
-        el->fingerprint = NULL;
+        el->fingerprint = 0;
         el->k_finger = supporting_length(fingerprint, x, k);
         el->index_offset = length - k_finger;
 
@@ -142,7 +103,7 @@ GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i,
                (g_array_index(rfinger, Element *, rfinger->len - 1))->value != fetched->value){
 
                 if(supporting_length(fingerprint, fetched->value, k) >= MIN_SUP_LENGTH){
-                    char *result = k_finger_to_string(fingerprint, fetched->value, k, "_");
+                    unsigned result = djb2(fingerprint, fetched->value, k);
                     fetched->fingerprint = result;
                     g_array_append_val(rfinger, fetched);
                 }
@@ -155,7 +116,7 @@ GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i,
 
     while (!g_queue_is_empty(queue)) {
         Element *data = (Element *)g_queue_pop_head(queue);
-        if(data->fingerprint == NULL)
+        if(data->fingerprint == 0)
             free(data);
     }
 
@@ -166,15 +127,23 @@ GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i,
 
 }
 
+static guint long_hash(const void* g){
+    return (guint)(g);
+}
+
+static gboolean long_eq(const void* g1, const void* g2){
+    return (guint)g1 == (guint)g2;
+}
+
 GHashTable *compute_k_finger_occurrences(GArray *fingerprint_list){
-    GHashTable *hash_table = g_hash_table_new(g_str_hash, g_str_equal);
+    GHashTable *hash_table = g_hash_table_new(long_hash, long_eq);
 
     for(int x=0; x<fingerprint_list->len ; x++){
         GArray* arr = g_array_index(fingerprint_list, GArray *, x);
 
         for(int y=0; y<arr->len ; y++){
             Element *val = g_array_index(arr, Element *, y);
-            GArray *retrived = g_hash_table_lookup(hash_table, val->fingerprint);
+            GArray *retrived = g_hash_table_lookup(hash_table, GINT_TO_POINTER(val->fingerprint));
 
             if(retrived == NULL)
                 retrived = g_array_new(FALSE, FALSE, sizeof(Occurrence *));
@@ -186,7 +155,7 @@ GHashTable *compute_k_finger_occurrences(GArray *fingerprint_list){
             new->fourth = val->k_finger;
 
             g_array_append_val(retrived, new);
-            g_hash_table_insert(hash_table, val->fingerprint, retrived);
+            g_hash_table_insert(hash_table, GINT_TO_POINTER(val->fingerprint), retrived);
         }
     }
     return hash_table;
@@ -212,7 +181,7 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
         GArray *Arr = g_array_new(FALSE, FALSE, sizeof(Triple_fragment *));
         for(int y=0; y < current->len; y++){
             Element *current_element = g_array_index(current, Element *, y);
-            GArray *occ_list = (GArray *)g_hash_table_lookup(k_finger_occurrences, current_element->fingerprint);
+            GArray *occ_list = (GArray *)g_hash_table_lookup(k_finger_occurrences, GINT_TO_POINTER(current_element->fingerprint));
 
             if(occ_list == NULL)
                 continue;
@@ -421,20 +390,21 @@ int main(void){
 
     // you can comment this part
 
+    
     pthread_mutex_destroy(&mutex);
     g_array_free(minimizers, TRUE);
 
-    g_hash_table_foreach(k_finger_occurrences, free_key_occurrences, NULL);
+    g_hash_table_foreach(k_finger_occurrences, free_key_occurrences, NULL); //non usiamo piu' stringhe
     g_hash_table_destroy(k_finger_occurrences);
     g_array_free(lengths, TRUE);
     free_garray_string(read_ids);
-
+    
 
     clock_t end_total = clock();
 
     calculate_usage(&usage);
 
-    fprintf(stderr, "\nOverall time %f s, Memory: %.2g GB \n", (double)(end_total - begin_total) / CLOCKS_PER_SEC, usage.ru_maxrss*convert);
+    fprintf(stderr, "\nOverall time %f s, Memory max rss: %.2g GB \n", (double)(end_total - begin_total) / CLOCKS_PER_SEC, usage.ru_maxrss*convert);
 
     return 0;
 }

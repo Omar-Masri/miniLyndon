@@ -33,7 +33,7 @@ typedef struct {
     unsigned value;
     unsigned k_finger;
     unsigned index_offset;
-    char* fingerprint;
+    unsigned fingerprint;
 } Element;
 
 typedef struct {
@@ -76,6 +76,7 @@ typedef struct {
     GArray *read_ids;
 } User_data;
 
+unsigned int djb2(GArray *array, int i, int k);
 char* substring(const char* str, int start, int end);
 gboolean compare_arrays(GArray *array1, int s1, int s2, int k);
 void print_Element(Element *el);
@@ -103,6 +104,7 @@ void free_key_value(gpointer key, gpointer value, gpointer user_data);
 void free_key_occurrences(gpointer key, gpointer value, gpointer user_data);
 void free_key_overlaps(gpointer key, gpointer value, gpointer user_data);
 void calculate_usage(struct rusage *usage);
+unsigned long read_off_memory_status();
 
 inline void *mymalloc(size_t size){
     void *result = malloc(size);
