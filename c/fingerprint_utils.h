@@ -22,6 +22,6 @@ struct Args {
 };
 
 void extract_long_reads(Args args, string name_file, int remainder);
-string compute_long_fingerprint(string s, int T);
+string calculate_fingerprint(string s, int T);
 
 #endif // FINGERPRINT_UTILS_H

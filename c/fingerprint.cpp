@@ -8,7 +8,7 @@
 #include <string>
 #include <functional>
 #include <algorithm>
-#include <getopt.h> // Per l'analisi degli argomenti dalla riga di comando in C++
+#include <getopt.h> 
 #include <vector>
 #include <atomic>
 
@@ -22,9 +22,7 @@ void calculate_fingerprints_parallel(Args args) {
     string input_fasta = args.path + args.fasta;
 
     // Numero di thread da utilizzare
-    const int num_threads = args.n; // Modifica questo valore se necessario
-
-    // Creazione dei thread
+    const int num_threads = args.n;
     vector<thread> threads;
 
     for (int i = 0; i < num_threads; ++i) {
@@ -69,7 +67,6 @@ int main(int argc, char* argv[]) {
 
     //esegui l'esperimento fingerprint per long reads
         calculate_fingerprints_parallel(args);
-   
 
     return 0;
 }
