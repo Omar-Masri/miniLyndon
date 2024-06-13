@@ -2,6 +2,7 @@
 #include <vector>
 #include <unordered_map>
 #include <tuple>
+#include <iostream>
 
 using namespace std;
 
@@ -151,7 +152,6 @@ tuple<string, string, string, int> find_bre(const string& x, const string& y) {
 
 }
 
-
 vector<string> icfl_(const string& w) {
     /* input: a string w
     output: calcola la  fattorizzazione inversa di w utilizzando l'algoritmo ICFL
@@ -211,7 +211,7 @@ vector<string> cfl_icfl_(const string& w, int cfl_max = 30) {
         if (factor.length() > cfl_max) {
             // Calcola la fattorizzazione ICFL del fattore utilizzando la funzione icfl
             vector<string> icfl_fact = icfl_(factor);
-
+            
             // Aggiungi i fattori della fattorizzazione ICFL al risultato
             result.insert(result.end(), icfl_fact.begin(), icfl_fact.end());
         } else {
@@ -227,7 +227,7 @@ vector<string> cfl_icfl_(const string& w, int cfl_max = 30) {
 
 
 //prende in input una sequenza 'seq',e un parametro 'k' per la fattorizzazione.
-vector<string> d_duval_(const string& seq, int k) {
+vector<string> factorization(const string& seq, int k) {
     vector<int> factors1;
     for (string factor : cfl_icfl_(seq, k))
         factors1.push_back(factor.size());
@@ -252,7 +252,7 @@ vector<string> d_duval_(const string& seq, int k) {
         if (factors1[0] < factors2[0]) {
             //Se la lunghezza del prossimo fattore nella prima fattorizzazione è minore,
             // estrai la lunghezza del fattore dalla lista dei fattori della prima fattorizzazione
-            n = factors1[0];  // Converti la stringa in un numero intero
+            n = factors1[0];  
             factors1.erase(factors1.begin());
             
             // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella seconda fattorizzazione
@@ -264,7 +264,7 @@ vector<string> d_duval_(const string& seq, int k) {
             }
         }else{
             // altrimenti estrai la lunghezza del fattore dalla lista dei fattori della seconda fattorizzazione
-            n = factors2[0];  // Converti la stringa in un numero intero
+            n = factors2[0];  
             factors2.erase(factors2.begin());
             
             // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella prima fattorizzazione
@@ -284,25 +284,7 @@ vector<string> d_duval_(const string& seq, int k) {
         result.push_back(f);
     }
 
-    // Se ci sono fattori rimanenti nella prima fattorizzazione, li aggiungi al risultato
-    while (!factors1.empty()) {
-        int n = factors1[0];  // Estrai la lunghezza del prossimo fattore dalla lista dei fattori
-        factors1.erase(factors1.begin());  // Rimuovi l'elemento dalla lista dei fattori
-
-        string f = rest.substr(0, n);  // Estrai il fattore corrispondente dalla sequenza
-        rest = rest.substr(n);  // Aggiorna la sequenza rimanente
-        result.push_back(f);  // Aggiungi il fattore estratto al risultato
-    }
-            
-    // Se ci sono fattori rimanenti nella seconda fattorizzazione, li aggiungi al risultato
-    while (!factors2.empty()) {
-        int n = factors2[0];  // Estrai la lunghezza del prossimo fattore dalla lista dei fattori
-        factors2.erase(factors2.begin());  // Rimuovi l'elemento dalla lista dei fattori
-
-        string f = rest.substr(0, n);  // Estrai il fattore corrispondente dalla sequenza
-        rest = rest.substr(n);  // Aggiorna la sequenza rimanente
-        result.push_back(f);  // Aggiungi il fattore estratto al risultato
-    }
+    
     
     return result;
     
