@@ -2,6 +2,7 @@
 #include <vector>
 #include <unordered_map>
 #include <tuple>
+#include <iostream>
 
 using namespace std;
 
@@ -164,7 +165,7 @@ vector<string> cfl_icfl_(const string& w, int cfl_max = 30) {
         if (factor.length() > cfl_max) {
             // Calcola la fattorizzazione ICFL del fattore utilizzando la funzione icfl
             vector<string> icfl_fact = icfl_(factor);
-
+            
             // Aggiungi i fattori della fattorizzazione ICFL al risultato
             result.insert(result.end(), icfl_fact.begin(), icfl_fact.end());
         } else {
