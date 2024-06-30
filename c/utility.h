@@ -77,6 +77,7 @@ typedef struct {
 } User_data;
 
 unsigned int djb2(GArray *array, int i, int k);
+unsigned int djb2arr(int *array, int i, int k);
 char* substring(const char* str, int start, int end);
 gboolean compare_arrays(GArray *array1, int s1, int s2, int k);
 void print_Element(Element *el);
@@ -94,8 +95,7 @@ guint Occurrence_hash(gconstpointer key);
 gboolean Occurrence_equal(gconstpointer a, gconstpointer b);
 guint duo_char_hash(gconstpointer key);
 gboolean duo_char_equal(gconstpointer a, gconstpointer b);
-void print_PAF(Duo_char *k, int *v, FILE *fp);
-void print_PAF_minimap(Duo_char *k, int *v, FILE *fp);
+void print_PAF_minimap(Duo_char *k, int *v, FILE *fp, GHashTable *set, bool rc);
 void free_partial_GArray(GArray *array, int start, int end);
 void free_garray_of_pointers(GArray *array);
 void free_garray_Occurrence(GArray *array);

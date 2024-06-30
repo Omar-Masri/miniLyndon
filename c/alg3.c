@@ -1,6 +1,7 @@
 #include "alg3.h"
 #include "glibconfig.h"
 #include "utility.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -176,7 +177,14 @@ void *thread_matches(void *args) {
 
 void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k, FILE *fp
                       ,GArray *lenghts, GArray *read_ids, int start_thread, int end_thread){
+    GHashTable *set;
     for(int x=start_thread; x<=end_thread; x++){
+
+        int mod = (x%2);
+
+        if(!mod)
+            set = g_hash_table_new(long_hash, long_eq);
+
         GArray *current = g_array_index(minimizers, GArray *, x);
         GArray *Arr = g_array_new(FALSE, FALSE, sizeof(Triple_fragment *));
         for(int y=0; y < current->len; y++){
@@ -219,7 +227,7 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
                     offset_struct o;
                     int score = maximal_colinear_subset(Arr, start, end, k, &o);
                     o.number = score/k;
-                    find_overlap(x, old_value->first, &o, fp, lenghts, read_ids);
+                    find_overlap(x, old_value->first, &o, fp, lenghts, read_ids, set, mod);
                 }
 
                 free_partial_GArray(Arr, start, end);
@@ -231,11 +239,15 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
 
         g_array_free(Arr, TRUE);
         free_garray_of_pointers(current);
+
+        if(mod)
+            g_hash_table_destroy(set);
+        
     }
 }
 
 void find_overlap(int first, int second, offset_struct *current, FILE *fp
-                  , GArray *lenghts, GArray *read_ids) {
+                  , GArray *lenghts, GArray *read_ids, GHashTable *set, bool rc) {
     if(current->number >= MIN_CHAIN_LENGTH){
         //length offset for left fingerprint
         int upstream_length1 = current->left_index_offset1;
@@ -292,7 +304,7 @@ void find_overlap(int first, int second, offset_struct *current, FILE *fp
                 val[7] = end_ov2;
                 val[8] = ov_length;
 
-                print_PAF_minimap(&dd, val, fp);
+                print_PAF_minimap(&dd, val, fp, set, rc);
 
                 free(dd.first);
                 free(dd.second);
@@ -369,6 +381,12 @@ int main(void){
         args[i].end = (i == 0) ? (minimizers->len - 1) : (args[i-1].start - 1);
         args[i].start = (i == NUM_THREADS - 1) ? 0 : minimizers->len - move;
 
+
+        if((args[i].start % 2))
+            args[i].start -= 1;
+        if(!(args[i].end % 2))
+            args[i].end -= 1;
+
         //args[i].start = i * partition_size;
         //args[i].end = (i == NUM_THREADS - 1) ? (minimizers->len - 1) : (args[i].start + partition_size - 1);
 
@@ -390,7 +408,6 @@ int main(void){
 
     // you can comment this part
 
-    
     pthread_mutex_destroy(&mutex);
     g_array_free(minimizers, TRUE);
 

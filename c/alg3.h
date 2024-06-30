@@ -14,7 +14,7 @@ GHashTable *compute_k_finger_occurrences(GArray *fingerprint_list);
 void *thread_matches(void *args);
 void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k, FILE *fp,
                      GArray *lengths, GArray *read_ids, int start_thread, int end_thread);
-void find_overlap(int first, int second, offset_struct *current, FILE *fp,
-                  GArray *lengths, GArray *read_ids);
+void find_overlap(int first, int second, offset_struct *current, FILE *fp
+                  , GArray *lenghts, GArray *read_ids, GHashTable *set, bool rc);
 
 #endif // ALG3_H_

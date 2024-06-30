@@ -84,6 +84,21 @@ unsigned int djb2(GArray *array, int i, int k)
 	return result;
 }
 
+unsigned int djb2arr(int *array, int i, int k)
+{
+	/* This is the djb2 string hash function */
+
+	unsigned int result = 5381;
+	int c;
+
+	for(int x=i; x<i+k; x++){
+        c = array[x];
+		result = (result << 5) + result + c;
+	}
+
+	return result;
+}
+
 /* D. J. Bernstein hash function */
 unsigned long bernstein(GArray *array, int i, int k)
 {
@@ -223,60 +238,42 @@ gboolean duo_char_equal(gconstpointer a, gconstpointer b) {
     return strcmp(point1->first, point2->first) == 0 && strcmp(point1->second, point2->second) == 0;
 }
 
-void print_PAF(Duo_char *k, int *v, FILE *fp){
+void print_PAF_minimap(Duo_char *k, int *v, FILE *fp, GHashTable *set, bool rc){
+    /*
     int start1 = v[4];
     int end1 = v[5];
 
     int start2 = v[6];
     int end2 = v[7];
+    */
 
     if(v[0] == 1){
-        int temp = start1;
-        start1 = v[2] - end1;
-        end1 = v[2] - temp;
+        int temp = v[4];
+        v[4] = v[2] - v[5];
+        v[5] = v[2] - temp;
     }
 
     if(v[1] == 1){
-        int temp = start2;
-        start2 = v[3] - end2;
-        end2 = v[3] - temp;
+        int temp = v[6];
+        v[6] = v[3] - v[7];
+        v[7] = v[3] - temp;
     }
 
     int strand = v[0] ^ v[1];
 
-    pthread_mutex_lock(&mutex);
-
-    fprintf(fp, "%s\t%d\t%d\t%d\t%s\t%d\t%d\t%d\t%d\n", k->first, v[2], start1, end1, k->second, v[3], start2, end2, strand);
-
-    pthread_mutex_unlock(&mutex);
-}
-
-void print_PAF_minimap(Duo_char *k, int *v, FILE *fp){
-
-    int start1 = v[4];
-    int end1 = v[5];
-
-    int start2 = v[6];
-    int end2 = v[7];
-
-    if(v[0] == 1){
-        int temp = start1;
-        start1 = v[2] - end1;
-        end1 = v[2] - temp;
+    if(rc){
+        int hash = djb2arr(v, 4, 4);
+        if(g_hash_table_contains(set, GINT_TO_POINTER(hash)))
+            return;
+    }else{
+        int hash = djb2arr(v, 4, 4);
+        g_hash_table_insert(set, GINT_TO_POINTER(hash), NULL);
     }
-
-    if(v[1] == 1){
-        int temp = start2;
-        start2 = v[3] - end2;
-        end2 = v[3] - temp;
-    }
-
-    int strand = v[0] ^ v[1];
 
     pthread_mutex_lock(&mutex);
 
-    fprintf(fp, "%s\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%d\t%d\n", k->first, v[2], start1,
-            end1, !strand ? '+' : '-' , k->second, v[3], start2, end2, v[8], v[8]);
+    fprintf(fp, "%s\t%d\t%d\t%d\t%c\t%s\t%d\t%d\t%d\t%d\t%d\n", k->first, v[2], v[4],
+            v[5], !strand ? '+' : '-' , k->second, v[3], v[6], v[7], v[8], v[8]);
 
     pthread_mutex_unlock(&mutex);
 }
