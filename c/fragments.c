@@ -344,7 +344,7 @@ static void free_array(GArray *Points){
 }
 
 static GArray* merge_arrays(GArray *arr1, GArray *arr2) {
-    GArray *merged_array = g_array_new(FALSE, FALSE, sizeof(Point_int *));
+    GArray *merged_array = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), arr1->len+arr2->len+2);
 
     guint i = 0, j = 0;
 
@@ -473,8 +473,7 @@ int get_score(Point_int *point){
 void activate_Point_int(GTree *D, Point_int *point){
     int q_score = point->fragment->score;
     GTreeNode *d = previous(D, GINT_TO_POINTER(point->second));
-    Point_int *p = (Point_int *)g_tree_node_value(d);
-    if(q_score > get_score((Point_int *)g_tree_node_value(previous(D, GINT_TO_POINTER(point->second))))){
+    if(q_score > get_score((Point_int *)g_tree_node_value(d))){
 
         while(D->nnodes){
             if(!g_tree_steal_lower_bound(D, GINT_TO_POINTER(point->second), q_score))
@@ -494,8 +493,8 @@ Point_int *RMQ(GTree *D, Point_int *point){
 
 int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_struct *o){
 
-    GArray *Points_s = g_array_new(FALSE, FALSE, sizeof(Point_int *));
-    GArray *Points_e = g_array_new(FALSE, FALSE, sizeof(Point_int *));
+    GArray *Points_s = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), array->len);
+    GArray *Points_e = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), array->len);
 
     for(int s = start; s < end; s++){
         Triple_fragment *value = g_array_index(array, Triple_fragment *, s);

@@ -275,7 +275,7 @@ void find_overlap(int first, int second, offset_struct *current, FILE *fp
             int start_ov2 = upstream_length2 - min_up;
 
             int min_down = min(read1_length-(upstream_length1+region_length1)
-                               , read2_length-(upstream_length2+region_length2));
+                               ,read2_length-(upstream_length2+region_length2));
 
             int end_ov1 = upstream_length1 + region_length1 + min_down;
             int end_ov2 = upstream_length2 + region_length2 + min_down;
@@ -408,6 +408,7 @@ int main(void){
 
     // you can comment this part
 
+    /*
     pthread_mutex_destroy(&mutex);
     g_array_free(minimizers, TRUE);
 
@@ -415,7 +416,7 @@ int main(void){
     g_hash_table_destroy(k_finger_occurrences);
     g_array_free(lengths, TRUE);
     free_garray_string(read_ids);
-    
+    */
 
     clock_t end_total = clock();
 
