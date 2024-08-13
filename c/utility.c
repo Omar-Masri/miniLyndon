@@ -138,7 +138,7 @@ void insert(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, 
     g_queue_push_tail(queue, X);
 }
 
-void insertLex(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k) {
+inline void insertLex(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k) {
     while (!g_queue_is_empty(queue)
            && compare_arrays(array, ((Element *)(g_queue_peek_tail_link(queue)->data))->value,
                       X->value, k) > 0) {

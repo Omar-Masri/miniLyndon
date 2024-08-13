@@ -2,6 +2,7 @@
 #include "glibconfig.h"
 #include "utility.h"
 #include <stdbool.h>
+#include <stdio.h>
 
 // start opaque functions
 
@@ -329,9 +330,9 @@ g_tree_remove_internal_lower_bound (GTree         *tree,
   return TRUE;
 }
 
-static void free_array(GArray *Points){
-    for(int i=0; i<Points->len; i++){
-        Point_int *c_point = g_array_index(Points, Point_int *, i) ;
+static void free_array(Point_int **Points, int len){
+    for(int i=0; i<len; i++){
+        Point_int *c_point = Points[i];
         if(c_point->fragment != NULL){
             if(c_point->type)
                 free(c_point->fragment);
@@ -340,35 +341,35 @@ static void free_array(GArray *Points){
             free(c_point);
     }
 
-    g_array_free(Points, TRUE);
+    free(Points);
 }
 
-static GArray* merge_arrays(GArray *arr1, GArray *arr2, int len) {
-    GArray *merged_array = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), len+2);
+static Point_int** merge_arrays(Point_int **arr1, Point_int **arr2, int len) {
+    Point_int **merged_array = mymalloc(sizeof(Point_int *) * (2*len+2));
 
     guint i = 0, j = 0;
 
-    while (i < arr1->len && j < arr2->len) {
-        Point_int *elem1 = g_array_index(arr1, Point_int *, i);
-        Point_int *elem2 = g_array_index(arr2, Point_int *, j);
+    while (i < len && j < len) {
+        Point_int *elem1 = arr1[i];
+        Point_int *elem2 = arr2[j];
 
         if (elem1->first <= elem2->first) {
-            g_array_append_val(merged_array, elem1);
+            merged_array[i+j+1] = elem1;
             i++;
         } else {
-            g_array_append_val(merged_array, elem2);
+            merged_array[i+j+1] = elem2;
             j++;
         }
     }
 
-    for (; i < arr1->len; i++) {
-        Point_int *elem1 = g_array_index(arr1, Point_int *, i);
-        g_array_append_val(merged_array, elem1);
+    for (; i < len; i++) {
+        Point_int *elem1 = arr1[i];
+        merged_array[i+j+1] = elem1;
     }
 
-    for (; j < arr2->len; j++) {
-        Point_int *elem2 = g_array_index(arr2, Point_int *, j);
-        g_array_append_val(merged_array, elem2);
+    for (; j < len; j++) {
+        Point_int *elem2 = arr2[j];
+        merged_array[i+j+1] = elem2;
     }
 
     return merged_array;
@@ -493,13 +494,16 @@ Point_int *RMQ(GTree *D, Point_int *point){
 
 int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_struct *o){
 
-    GArray *Points_s = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), end-start);
-    GArray *Points_e = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), end-start);
+    int es = end-start;
 
+    Point_int **Points_s = mymalloc(sizeof(Point_int *) * es);
+    Point_int **Points_e = mymalloc(sizeof(Point_int *) * es);
+
+    int l = 0;
     for(int s = start; s < end; s++){
         Triple_fragment *value = g_array_index(array, Triple_fragment *, s);
 
-        Fragment_Cartesian *fragment = malloc(sizeof(Fragment_Cartesian));
+        Fragment_Cartesian *fragment = mymalloc(sizeof(Fragment_Cartesian));
 
         Point_int *point_s = new_Point_int(value->second->value
                                            , value->third->second, true, fragment);
@@ -512,14 +516,16 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
         fragment->triple = value;
         fragment->score = 0;
 
-        g_array_append_val(Points_s, point_s);
-        g_array_append_val(Points_e, point_e);
+        Points_s[l] = point_s;
+        Points_e[l] = point_e;
+
+        l++;
     }
 
-    GArray *Points = merge_arrays(Points_s, Points_e, end-start);
+    Point_int **Points = merge_arrays(Points_s, Points_e, es);
 
-    g_array_free(Points_s, TRUE);
-    g_array_free(Points_e, TRUE);
+    free(Points_s);
+    free(Points_e);
 
     Point_int *origin = malloc(sizeof(Point_int));
     Point_int *terminus = malloc(sizeof(Point_int));
@@ -534,13 +540,13 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
     terminus->type = true;
     terminus->fragment = NULL;
 
-    g_array_prepend_val(Points, origin);
-    g_array_append_val(Points, terminus);
+    Points[0] = origin;
+    Points[2*es+1] = terminus;
 
     GTree *D = g_tree_new_full(compare_keys, NULL, NULL, NULL);  //metti funzione free value
 
-    for(int i=0; i<Points->len; i++){
-        Point_int *c_point = g_array_index(Points, Point_int *, i);
+    for(int i=0; i<2*es+2; i++){
+        Point_int *c_point = Points[i];
 
         if(c_point->type == true){                    //start
             Point_int *q = RMQ(D, c_point);
@@ -586,7 +592,7 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
 
                 int score = q->fragment->score;
 
-                free_array(Points);
+                free_array(Points, 2*es+2);
 
                 g_tree_destroy(D);
 
