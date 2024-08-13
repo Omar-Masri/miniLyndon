@@ -343,8 +343,8 @@ static void free_array(GArray *Points){
     g_array_free(Points, TRUE);
 }
 
-static GArray* merge_arrays(GArray *arr1, GArray *arr2) {
-    GArray *merged_array = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), arr1->len+arr2->len+2);
+static GArray* merge_arrays(GArray *arr1, GArray *arr2, int len) {
+    GArray *merged_array = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), len+2);
 
     guint i = 0, j = 0;
 
@@ -493,8 +493,8 @@ Point_int *RMQ(GTree *D, Point_int *point){
 
 int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_struct *o){
 
-    GArray *Points_s = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), array->len);
-    GArray *Points_e = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), array->len);
+    GArray *Points_s = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), end-start);
+    GArray *Points_e = g_array_sized_new(FALSE, FALSE, sizeof(Point_int *), end-start);
 
     for(int s = start; s < end; s++){
         Triple_fragment *value = g_array_index(array, Triple_fragment *, s);
@@ -516,7 +516,7 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
         g_array_append_val(Points_e, point_e);
     }
 
-    GArray *Points = merge_arrays(Points_s, Points_e);
+    GArray *Points = merge_arrays(Points_s, Points_e, end-start);
 
     g_array_free(Points_s, TRUE);
     g_array_free(Points_e, TRUE);
