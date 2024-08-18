@@ -30,7 +30,7 @@ HDR_FILES_CP = $(SRC_FILES_CP:.cpp=.h)
 
 dir_guard=@mkdir -p $(@D)
 
-all: $(BINDIR)minimizer_demo $(BINDIR)fingerprint
+all: $(BINDIR)minimizer_demo $(BINDIR)postprocessing $(BINDIR)fingerprint
 
 $(BINDIR)minimizer_demo: $(OBJ_FILES_C)
 	$(dir_guard)
@@ -47,6 +47,10 @@ $(BINDIR)fingerprint: $(OBJ_FILES_CP)
 $(BINDIR)%.o: %.cpp $(HDR_FILES_CP)
 	$(dir_guard)
 	$(CCP) $(CXXFLAGS) -c -o $@ $<
+
+$(BINDIR)postprocessing: postprocessing.c
+	$(dir_guard)
+	$(CC) $(CFLAGS) $^ -o $@ `pkg-config --libs glib-2.0`
 
 .PHONY: clean doc
 

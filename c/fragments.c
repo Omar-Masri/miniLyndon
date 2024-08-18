@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+int mu = -1;
+
 // start opaque functions
 
 static gboolean
@@ -496,6 +498,10 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
 
     int es = end-start;
 
+    // using vla for some reason sometimes i get seg fault
+    /* Point_int *Points_s[es]; */
+    /* Point_int *Points_e[es]; */
+
     Point_int **Points_s = mymalloc(sizeof(Point_int *) * es);
     Point_int **Points_e = mymalloc(sizeof(Point_int *) * es);
 
@@ -527,8 +533,8 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
     free(Points_s);
     free(Points_e);
 
-    Point_int *origin = malloc(sizeof(Point_int));
-    Point_int *terminus = malloc(sizeof(Point_int));
+    Point_int *origin = mymalloc(sizeof(Point_int));
+    Point_int *terminus = mymalloc(sizeof(Point_int));
 
     origin->first = 0;
     origin->second = 0;
@@ -542,6 +548,11 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
 
     Points[0] = origin;
     Points[2*es+1] = terminus;
+
+    /* if(mu < 2*es+2){ */
+    /*   mu = 2*es+2; */
+    /*   fprintf(stderr, "%d \n", mu); */
+    /* } */
 
     GTree *D = g_tree_new_full(compare_keys, NULL, NULL, NULL);  //metti funzione free value
 

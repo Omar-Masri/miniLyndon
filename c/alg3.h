@@ -6,6 +6,7 @@
 #include <glib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <unistd.h>
 
 GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i, int k),
              void (*insertt)(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k),

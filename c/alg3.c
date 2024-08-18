@@ -4,8 +4,43 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <getopt.h>
+#include <ctype.h>
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+extern int mu;
+
+int K = 7;
+int W = 11;
+int MIN_SUP_LENGTH = 15;
+int MAX_K_FINGER_OCCURRENCE = 500;
+int MIN_SHARED_K_FINGERS = 6;
+int MIN_CHAIN_LENGTH = 5;
+double MIN_REGION_K_FINGER_COVERAGE = 0.27;
+double MAX_DIFF_REGION_PERCENTAGE = 0.1;
+int MIN_REGION_LENGTH = 10;
+double MIN_OVERLAP_COVERAGE = 0.10;
+int MIN_OVERLAP_LENGTH = 100;
+int NUM_THREADS = 6;
+
+static struct option long_options[] =
+{
+    {"kfinger", required_argument, NULL, 'k'},
+    {"window", required_argument, NULL, 'w'},
+    {"min_sup_length", required_argument, NULL, 'l'},
+    {"max_kfinger_occurrence", required_argument, NULL, 'x'},
+    {"min_shared_kfinger", required_argument, NULL, 's'},
+    {"min_chain_length", required_argument, NULL, 'c'},
+    {"min_region_kfinger_coverage", required_argument, NULL, 'r'},
+    {"min_diff_region_percentage", required_argument, NULL, 'd'},
+    {"min_region_length", required_argument, NULL, 'm'},
+    {"min_overlap_coverage", required_argument, NULL, 'a'},
+    {"min_overlap_length", required_argument, NULL, 'o'},
+    {"num_threads", required_argument, NULL, 't'},
+    {"help", no_argument, NULL, 'h'},
+    {NULL, 0, NULL, 0}
+};
 
 typedef struct {
     int start;
@@ -225,7 +260,14 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
 
                 if(end - start >= MIN_SHARED_K_FINGERS){
                     offset_struct o;
+                    int mutemp = mu;
+
                     int score = maximal_colinear_subset(Arr, start, end, k, &o);
+
+                    /* if(mutemp != mu){ */
+                    /*     fprintf(stderr, "%s %s \n", g_array_index(read_ids, char *, x) */
+                    /*             , g_array_index(read_ids, char *, old_value->first)); */
+                    /* } */
                     o.number = score/k;
                     find_overlap(x, old_value->first, &o, fp, lenghts, read_ids, set, mod);
                 }
@@ -313,8 +355,25 @@ void find_overlap(int first, int second, offset_struct *current, FILE *fp
     }
 }
 
-int main(void){
-    fputs("START\n", stderr);
+void print_help() {
+    printf("Usage: minimizer_demo [-k <int>] [-w <int>] [-l <int>] [-x <int>] [-s <int>] [-c <int>] [-r <float>] [-d <float>] [-m <int>] [-a <float>] [-o <int>] [-t <int>] [-h]\n\n");
+    printf("Options:\n");
+    printf("  -k, --kfinger <int>                 : Set the value of K (default: 7)\n");
+    printf("  -w, --window <int>                  : Set the value of W (default: 11)\n");
+    printf("  -l, --min_sup_length <int>          : Set the minimum support length (MIN_SUP_LENGTH) (default: 15)\n");
+    printf("  -x, --max_kfinger_occurrence <int>  : Set the maximum K-finger occurrence (MAX_K_FINGER_OCCURRENCE) (default: 500)\n");
+    printf("  -s, --min_shared_kfinger <int>      : Set the minimum shared K-fingers (MIN_SHARED_K_FINGERS) (default: 6)\n");
+    printf("  -c, --min_chain_length <int>        : Set the minimum chain length (MIN_CHAIN_LENGTH) (default: 5)\n");
+    printf("  -r, --min_region_kfinger_coverage <float> : Set the minimum region K-finger coverage (MIN_REGION_K_FINGER_COVERAGE) between 0 and 1 (default: 0.27)\n");
+    printf("  -d, --min_diff_region_percentage <float>  : Set the maximum difference region percentage (MAX_DIFF_REGION_PERCENTAGE) between 0 and 1 (default: 0.1)\n");
+    printf("  -m, --min_region_length <int>       : Set the minimum region length (MIN_REGION_LENGTH) (default: 10)\n");
+    printf("  -a, --min_overlap_coverage <float>  : Set the minimum overlap coverage (MIN_OVERLAP_COVERAGE) between 0 and 1 (default: 0.1)\n");
+    printf("  -o, --min_overlap_length <int>      : Set the minimum overlap length (MIN_OVERLAP_LENGTH) (default: 100)\n");
+    printf("  -t, --num_threads <int>             : Set the number of threads (NUM_THREADS) (default: 6)\n");
+    printf("  -h, --help                          : Show this help message\n");
+}
+
+int main(int argc, char **argv){
     struct rusage usage;
     double convert = 1e-6;
     FILE *fp = INPUT;
@@ -329,6 +388,92 @@ int main(void){
         exit(1);
     }
 
+    //Start ------------------ Parameter Parsing
+    int c;
+    while ((c = getopt_long(argc, argv, "k:w:l:x:s:c:r:d:m:a:o:t:h", long_options, NULL)) != -1){
+    switch (c)
+      {
+      case 'k':
+        if(optarg != NULL)
+            K = atoi(optarg);
+        break;
+      case 'w':
+        if(optarg != NULL)
+            W = atoi(optarg);
+        break;
+      case 'l':
+        if(optarg != NULL)
+            MIN_SUP_LENGTH = atoi(optarg);
+        break;
+      case 'x':
+        if(optarg != NULL)
+            MAX_K_FINGER_OCCURRENCE =  atoi(optarg);
+        break;
+      case 's':
+        if(optarg != NULL)
+            MIN_SHARED_K_FINGERS = atoi(optarg);
+        break;
+      case 'c':
+        if(optarg != NULL)
+            MIN_CHAIN_LENGTH = atoi(optarg);
+        break;
+      case 'r':
+        if(optarg != NULL){
+            MIN_REGION_K_FINGER_COVERAGE = atof(optarg);
+            if(MIN_REGION_K_FINGER_COVERAGE >= 1 || MIN_REGION_K_FINGER_COVERAGE <= 0){
+                fprintf(stdout, "argument must be between 0 and 1");
+                return 1;
+            }
+        }
+        break;
+      case 'd':
+        if(optarg != NULL){
+            MAX_DIFF_REGION_PERCENTAGE = atof(optarg);
+            if(MAX_DIFF_REGION_PERCENTAGE >= 1 || MAX_DIFF_REGION_PERCENTAGE <= 0){
+                fprintf(stdout, "argument must be between 0 and 1");
+                return 1;
+            }
+        }
+        break;
+      case 'm':
+        if(optarg != NULL)
+            MIN_REGION_LENGTH =  atoi(optarg);
+        break;
+      case 'a':
+        if(optarg != NULL){
+            MIN_OVERLAP_COVERAGE = atof(optarg);
+            if(MIN_OVERLAP_COVERAGE >= 1 || MIN_OVERLAP_COVERAGE <= 0){
+                fprintf(stdout, "argument must be between 0 and 1");
+                return 1;
+            }
+        }
+        break;
+      case 'o':
+        if(optarg != NULL)
+            MIN_OVERLAP_LENGTH =  atoi(optarg);
+        break;
+      case 't':
+        if(optarg != NULL)
+            NUM_THREADS =  atoi(optarg);
+        break;
+      case 'h':
+        print_help();
+        return 0;
+      case '?':
+        if (isprint (optopt))
+          fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+        else
+          fprintf (stderr,
+                   "Unknown option character `\\x%x'.\n",
+                   optopt);
+        return 1;
+      default:
+        abort();
+      }
+    }
+
+    //End   ------------------ Parameter Parsing
+    fputs("START\n", stderr);
     GArray *minimizers = g_array_new(FALSE, FALSE, sizeof(GArray*));
     GArray *lengths = g_array_new(FALSE, FALSE, sizeof(int));
     GArray *read_ids = g_array_new(FALSE, FALSE, sizeof(char *));
@@ -351,7 +496,7 @@ int main(void){
 
         g_array_free(array, TRUE);
     }
-    fclose(fp);                                                    //close stdout?
+    fclose(fp);                                                    //close stdin?
     clock_t end = clock();
 
     calculate_usage(&usage);
@@ -408,21 +553,20 @@ int main(void){
 
     // you can comment this part
 
-    /*
-    pthread_mutex_destroy(&mutex);
-    g_array_free(minimizers, TRUE);
+    /* pthread_mutex_destroy(&mutex); */
+    /* g_array_free(minimizers, TRUE); */
 
-    g_hash_table_foreach(k_finger_occurrences, free_key_occurrences, NULL); //non usiamo piu' stringhe
-    g_hash_table_destroy(k_finger_occurrences);
-    g_array_free(lengths, TRUE);
-    free_garray_string(read_ids);
-    */
+    /* g_hash_table_foreach(k_finger_occurrences, free_key_occurrences, NULL); //non usiamo piu' stringhe */
+    /* g_hash_table_destroy(k_finger_occurrences); */
+    /* g_array_free(lengths, TRUE); */
+    /* free_garray_string(read_ids); */
+
 
     clock_t end_total = clock();
 
     calculate_usage(&usage);
 
-    fprintf(stderr, "\nOverall time %f s, Memory max rss: %.2g GB \n", (double)(end_total - begin_total) / CLOCKS_PER_SEC, usage.ru_maxrss*convert);
+    fprintf(stderr, "\nMemory max rss: %.2g GB \n", (double)(end_total - begin_total) / CLOCKS_PER_SEC, usage.ru_maxrss*convert);
 
     return 0;
 }

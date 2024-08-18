@@ -8,20 +8,6 @@
 #include <stdint.h>
 #include <sys/resource.h>
 
-#define K 7
-#define W 15
-#define MIN_SUP_LENGTH 20
-#define MAX_K_FINGER_OCCURRENCE -1
-#define MIN_SHARED_K_FINGERS 3
-#define MIN_CHAIN_LENGTH 2
-#define MIN_REGION_K_FINGER_COVERAGE 0.27
-#define MAX_DIFF_REGION_PERCENTAGE 0
-#define MIN_REGION_LENGTH 0
-#define MIN_OVERLAP_COVERAGE 0.10
-#define MIN_OVERLAP_LENGTH 100
-
-#define NUM_THREADS 1
-
 #define INPUT stdin
 #define OUTPUT_FILE_NAME "./overlaps-noerr.paf"
 #define OUTPUT stdout

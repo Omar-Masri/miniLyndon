@@ -20,7 +20,7 @@ tuple<string, string> manipulate_read(string l_1, string l_2){
         string id_gene = "";
 
         l_1.erase(l_1.begin()); // Rimuovi il carattere '>' dall'ID_GENE
-        id_gene = l_1;
+        id_gene = l_1.substr(0, l_1.find(' '));
 
         read_original += id_gene + "_0 "; 
         read_rc += id_gene + "_1 "; 
