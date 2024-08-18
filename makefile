@@ -16,13 +16,13 @@ CXXFLAGS = -m64 $(OPTIMIZATION)
 
 CFLAGS = `pkg-config --cflags glib-2.0` $(OPTIMIZATION) -g
 
-SRC_FILES_C = alg3.c utility.c fragments.c
+SRC_FILES_C = src/alg3.c src/utility.c src/fragments.c
 
 OBJ_FILES_C = $(addprefix $(BINDIR), $(SRC_FILES_C:.c=.o))
 
 HDR_FILES_C = $(SRC_FILES_C:.c=.h)
 
-SRC_FILES_CP = fingerprint.cpp fingerprint_utils.cpp factorization_comb.cpp
+SRC_FILES_CP = src/fingerprint.cpp src/fingerprint_utils.cpp src/factorization_comb.cpp
 
 OBJ_FILES_CP = $(addprefix $(BINDIR), $(SRC_FILES_CP:.cpp=.o))
 
@@ -48,11 +48,9 @@ $(BINDIR)%.o: %.cpp $(HDR_FILES_CP)
 	$(dir_guard)
 	$(CCP) $(CXXFLAGS) -c -o $@ $<
 
-$(BINDIR)postprocessing: postprocessing.c
+$(BINDIR)postprocessing: src/postprocessing.c
 	$(dir_guard)
 	$(CC) $(CFLAGS) $^ -o $@ `pkg-config --libs glib-2.0`
-
-.PHONY: clean doc
 
 clean:
 	rm -r $(BINDIR)
