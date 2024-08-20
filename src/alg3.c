@@ -566,7 +566,7 @@ int main(int argc, char **argv){
 
     calculate_usage(&usage);
 
-    fprintf(stderr, "\nMemory max rss: %.2g GB \n", (double)(end_total - begin_total) / CLOCKS_PER_SEC, usage.ru_maxrss*convert);
+    fprintf(stderr, "\nMemory max rss: %.2f GB \n", (double)(end_total - begin_total) / CLOCKS_PER_SEC, usage.ru_maxrss*convert);
 
     return 0;
 }
