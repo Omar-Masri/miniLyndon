@@ -14,6 +14,37 @@ int hamming_distance(const char *string1, const char *string2, int length, int s
     return distance;
 }
 
+// Function to calculate Hamming distance
+int hamming_distance_rc(const char *string1, const char *string2, int length, int start1, int end2) {
+    int distance = 0;
+    for (int i = 0; i < length; i++) {
+
+        char nt;
+        switch (string2[end2 - i - 1]) {
+            case 'A':
+                nt = 'T';
+                break;
+            case 'T':
+                nt = 'A';
+                break;
+            case 'C':
+                nt = 'G';
+                break;
+            case 'G':
+                nt = 'C';
+                break;
+            default:
+                nt = 0;
+                break;
+        }
+
+        if (string1[start1 + i] != nt) {
+            distance++;
+        }
+    }
+    return distance;
+}
+
 int main(int argc, char *argv[]) {
     FILE *file;
     char *filename = argv[1];
@@ -65,14 +96,21 @@ int main(int argc, char *argv[]) {
         int end2 = atoi(r[8]);
         int len1 = end1 - start1;
         int len2 = end2 - start2;
+        char strand = r[4][0];
+        int l2 = atoi(r[6]);
+        int at = atoi(r[10]);
 
         // Retrieve sequences from the hash table
         char *seq1 = g_hash_table_lookup(seq_table, read1);
         char *seq2 = g_hash_table_lookup(seq_table, read2);
 
-        // Calculate the Hamming distance
-        int dis = hamming_distance(seq1, seq2, len1, start1, start2);
-        int at = atoi(r[10]);
+        int dis;
+
+        if(strand == '-')
+            dis = hamming_distance_rc(seq1, seq2, at, start1, end2);
+        else
+            dis = hamming_distance(seq1, seq2, at, start1, start2);
+
         int adjusted_score = at - dis;
 
         // Print the output line

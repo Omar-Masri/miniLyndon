@@ -18,7 +18,7 @@ int MAX_K_FINGER_OCCURRENCE = 500;
 int MIN_SHARED_K_FINGERS = 6;
 int MIN_CHAIN_LENGTH = 5;
 double MIN_REGION_K_FINGER_COVERAGE = 0.27;
-double MAX_DIFF_REGION_PERCENTAGE = 0.1;
+double MAX_DIFF_REGION_PERCENTAGE = 0;
 int MIN_REGION_LENGTH = 10;
 double MIN_OVERLAP_COVERAGE = 0.10;
 int MIN_OVERLAP_LENGTH = 100;
@@ -521,19 +521,19 @@ int main(int argc, char **argv){
     int move = 0;
     int partition_size = minimizers->len / NUM_THREADS;
 
+    int st = minimizers->len;
+
     for (int i = 0; i < NUM_THREADS; ++i) {
-        move += minimizers->len / (2.5 * (i+1));   //geometric series
+        move += st / (3 - (i/NUM_THREADS));   //geometric series
         args[i].end = (i == 0) ? (minimizers->len - 1) : (args[i-1].start - 1);
         args[i].start = (i == NUM_THREADS - 1) ? 0 : minimizers->len - move;
-
 
         if((args[i].start % 2))
             args[i].start -= 1;
         if(!(args[i].end % 2))
             args[i].end -= 1;
 
-        //args[i].start = i * partition_size;
-        //args[i].end = (i == NUM_THREADS - 1) ? (minimizers->len - 1) : (args[i].start + partition_size - 1);
+        st = args[i].start;
 
         args[i].minimizers = minimizers;
         args[i].k_finger_occurrences = k_finger_occurrences;
