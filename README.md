@@ -1,5 +1,5 @@
 # miniLyndon
-MiniLyndon is a novel and computationally efficient long-read to long-read overlapper designed for perfect or low-error sequencing reads.
+miniLyndon is a novel and computationally efficient long-read to long-read overlapper designed for perfect or low-error sequencing reads.
 
 ## Pre-requisites
 - gcc ≥ 5.1
