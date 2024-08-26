@@ -41,16 +41,16 @@ typedef struct {
 } Triple_fragment;
 
 typedef struct {
-    unsigned int left_offset1;
+    unsigned int left_offset1;          // you can remove this TODO
     unsigned int left_index_offset1;
     unsigned int left_supp_length1;     // you can remove this TODO
-    unsigned int left_offset2;
+    unsigned int left_offset2;          // you can remove this TODO
     unsigned int left_index_offset2;
     unsigned int left_supp_length2;     // you can remove this TODO
-    unsigned int right_offset1;
+    unsigned int right_offset1;         // you can remove this TODO
     unsigned int right_index_offset1;
     unsigned int right_supp_length1;
-    unsigned int right_offset2;
+    unsigned int right_offset2;         // you can remove this TODO
     unsigned int right_index_offset2;
     unsigned int right_supp_length2;
     unsigned int number;

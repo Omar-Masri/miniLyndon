@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-int mu = -1;
-
 // start opaque functions
 
 static gboolean
@@ -548,11 +546,6 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
 
     Points[0] = origin;
     Points[2*es+1] = terminus;
-
-    /* if(mu < 2*es+2){ */
-    /*   mu = 2*es+2; */
-    /*   fprintf(stderr, "%d \n", mu); */
-    /* } */
 
     GTree *D = g_tree_new_full(compare_keys, NULL, NULL, NULL);  //metti funzione free value
 

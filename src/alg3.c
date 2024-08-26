@@ -9,12 +9,10 @@
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-extern int mu;
-
 int K = 7;
 int W = 11;
 int MIN_SUP_LENGTH = 15;
-int MAX_K_FINGER_OCCURRENCE = 500;
+int MAX_K_FINGER_OCCURRENCE = 1000;  //not this value go to line 526
 int MIN_SHARED_K_FINGERS = 6;
 int MIN_CHAIN_LENGTH = 5;
 double MIN_REGION_K_FINGER_COVERAGE = 0.27;
@@ -260,14 +258,9 @@ void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k
 
                 if(end - start >= MIN_SHARED_K_FINGERS){
                     offset_struct o;
-                    int mutemp = mu;
 
                     int score = maximal_colinear_subset(Arr, start, end, k, &o);
 
-                    /* if(mutemp != mu){ */
-                    /*     fprintf(stderr, "%s %s \n", g_array_index(read_ids, char *, x) */
-                    /*             , g_array_index(read_ids, char *, old_value->first)); */
-                    /* } */
                     o.number = score/k;
                     find_overlap(x, old_value->first, &o, fp, lenghts, read_ids, set, mod);
                 }
@@ -358,18 +351,18 @@ void find_overlap(int first, int second, offset_struct *current, FILE *fp
 void print_help() {
     printf("Usage: minimizer_demo [-k <int>] [-w <int>] [-l <int>] [-x <int>] [-s <int>] [-c <int>] [-r <float>] [-d <float>] [-m <int>] [-a <float>] [-o <int>] [-t <int>] [-h]\n\n");
     printf("Options:\n");
-    printf("  -k, --kfinger <int>                 : Set the value of K (default: 7)\n");
-    printf("  -w, --window <int>                  : Set the value of W (default: 11)\n");
-    printf("  -l, --min_sup_length <int>          : Set the minimum support length (MIN_SUP_LENGTH) (default: 15)\n");
-    printf("  -x, --max_kfinger_occurrence <int>  : Set the maximum K-finger occurrence (MAX_K_FINGER_OCCURRENCE) (default: 500)\n");
-    printf("  -s, --min_shared_kfinger <int>      : Set the minimum shared K-fingers (MIN_SHARED_K_FINGERS) (default: 6)\n");
-    printf("  -c, --min_chain_length <int>        : Set the minimum chain length (MIN_CHAIN_LENGTH) (default: 5)\n");
-    printf("  -r, --min_region_kfinger_coverage <float> : Set the minimum region K-finger coverage (MIN_REGION_K_FINGER_COVERAGE) between 0 and 1 (default: 0.27)\n");
-    printf("  -d, --min_diff_region_percentage <float>  : Set the maximum difference region percentage (MAX_DIFF_REGION_PERCENTAGE) between 0 and 1 (default: 0.1)\n");
-    printf("  -m, --min_region_length <int>       : Set the minimum region length (MIN_REGION_LENGTH) (default: 10)\n");
-    printf("  -a, --min_overlap_coverage <float>  : Set the minimum overlap coverage (MIN_OVERLAP_COVERAGE) between 0 and 1 (default: 0.1)\n");
-    printf("  -o, --min_overlap_length <int>      : Set the minimum overlap length (MIN_OVERLAP_LENGTH) (default: 100)\n");
-    printf("  -t, --num_threads <int>             : Set the number of threads (NUM_THREADS) (default: 6)\n");
+    printf("  -k, --kfinger <int>                 : Set the value of K (default: %d)\n", K);
+    printf("  -w, --window <int>                  : Set the value of W (default: %d)\n", W);
+    printf("  -l, --min_sup_length <int>          : Set the minimum support length (MIN_SUP_LENGTH) (default: %d)\n", MIN_SUP_LENGTH);
+    printf("  -x, --max_kfinger_occurrence <int>  : Set the maximum K-finger occurrence (MAX_K_FINGER_OCCURRENCE) (default: %d)\n", MAX_K_FINGER_OCCURRENCE);
+    printf("  -s, --min_shared_kfinger <int>      : Set the minimum shared K-fingers (MIN_SHARED_K_FINGERS) (default: %d)\n", MIN_SHARED_K_FINGERS);
+    printf("  -c, --min_chain_length <int>        : Set the minimum chain length (MIN_CHAIN_LENGTH) (default: %d)\n", MIN_CHAIN_LENGTH);
+    printf("  -r, --min_region_kfinger_coverage <float> : Set the minimum region K-finger coverage (MIN_REGION_K_FINGER_COVERAGE) between 0 and 1 (default: %.2f)\n",MIN_REGION_K_FINGER_COVERAGE);
+    printf("  -d, --min_diff_region_percentage <float>  : Set the maximum difference region percentage (MAX_DIFF_REGION_PERCENTAGE) between 0 and 1 (default: %.2f)\n", MAX_DIFF_REGION_PERCENTAGE);
+    printf("  -m, --min_region_length <int>       : Set the minimum region length (MIN_REGION_LENGTH) (default: %d)\n", MIN_REGION_LENGTH);
+    printf("  -a, --min_overlap_coverage <float>  : Set the minimum overlap coverage (MIN_OVERLAP_COVERAGE) between 0 and 1 (default: %.2f)\n", MIN_OVERLAP_COVERAGE);
+    printf("  -o, --min_overlap_length <int>      : Set the minimum overlap length (MIN_OVERLAP_LENGTH) (default: %d)\n", MIN_OVERLAP_LENGTH);
+    printf("  -t, --num_threads <int>             : Set the number of threads (NUM_THREADS) (default: %d)\n", NUM_THREADS);
     printf("  -h, --help                          : Show this help message\n");
 }
 
@@ -420,7 +413,7 @@ int main(int argc, char **argv){
       case 'r':
         if(optarg != NULL){
             MIN_REGION_K_FINGER_COVERAGE = atof(optarg);
-            if(MIN_REGION_K_FINGER_COVERAGE >= 1 || MIN_REGION_K_FINGER_COVERAGE <= 0){
+            if(MIN_REGION_K_FINGER_COVERAGE > 1 || MIN_REGION_K_FINGER_COVERAGE < 0){
                 fprintf(stdout, "argument must be between 0 and 1");
                 return 1;
             }
@@ -429,7 +422,7 @@ int main(int argc, char **argv){
       case 'd':
         if(optarg != NULL){
             MAX_DIFF_REGION_PERCENTAGE = atof(optarg);
-            if(MAX_DIFF_REGION_PERCENTAGE >= 1 || MAX_DIFF_REGION_PERCENTAGE <= 0){
+            if(MAX_DIFF_REGION_PERCENTAGE > 1 || MAX_DIFF_REGION_PERCENTAGE < 0){
                 fprintf(stdout, "argument must be between 0 and 1");
                 return 1;
             }
@@ -442,7 +435,7 @@ int main(int argc, char **argv){
       case 'a':
         if(optarg != NULL){
             MIN_OVERLAP_COVERAGE = atof(optarg);
-            if(MIN_OVERLAP_COVERAGE >= 1 || MIN_OVERLAP_COVERAGE <= 0){
+            if(MIN_OVERLAP_COVERAGE > 1 || MIN_OVERLAP_COVERAGE < 0){
                 fprintf(stdout, "argument must be between 0 and 1");
                 return 1;
             }
@@ -523,6 +516,8 @@ int main(int argc, char **argv){
 
     int st = minimizers->len;
 
+    MAX_K_FINGER_OCCURRENCE = min(minimizers->len/500, MAX_K_FINGER_OCCURRENCE);
+
     for (int i = 0; i < NUM_THREADS; ++i) {
         move += st / (3 - (i/NUM_THREADS));   //geometric series
         args[i].end = (i == 0) ? (minimizers->len - 1) : (args[i-1].start - 1);
@@ -551,6 +546,7 @@ int main(int argc, char **argv){
         pthread_join(threads[i], NULL);
     }
 
+
     // you can comment this part
 
     /* pthread_mutex_destroy(&mutex); */
@@ -566,7 +562,7 @@ int main(int argc, char **argv){
 
     calculate_usage(&usage);
 
-    fprintf(stderr, "\nMemory max rss: %.2f GB \n", (double)(end_total - begin_total) / CLOCKS_PER_SEC, usage.ru_maxrss*convert);
+    fprintf(stderr, "\nMemory max rss: %.2f GB \n", usage.ru_maxrss*convert);
 
     return 0;
 }
