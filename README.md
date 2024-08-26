@@ -20,10 +20,10 @@ cd miniLyndon && make
 ./run.sh <directory> <reads.fa> <number of threads> > <out.paf>
 ```
 
-- **<directory>**: The directory where **<reads.fa>** is stored.
-- **<reads.fa>**: The FASTA file containing the long-reads to be overlapped.
-- **<number of threads>**: Specifies the number of threads to use for parallel processing.
-- **<out.paf>**: The output file where the overlaps will be saved in [PAF](#output).
+- **\<directory\>**: The directory where **\<reads.fa\>** is stored.
+- **\<reads.fa\>**: The FASTA file containing the long-reads to be overlapped.
+- **\<number of threads\>**: Specifies the number of threads to use for parallel processing.
+- **\<out.paf\>**: The output file where the overlaps will be saved in [PAF](#output).
 
 
 ## Run with postprocessing
