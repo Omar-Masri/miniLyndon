@@ -10,6 +10,6 @@
 using namespace std;
 
 string reverse_complement(string sequenza);
-vector<string> factorization(const string& s, int T);
+vector<int> factorization(const string& s, int T);
 
-#endif // FACTORIZATION_COMB_H 
+#endif // FACTORIZATION_COMB_H

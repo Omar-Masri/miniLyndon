@@ -73,13 +73,13 @@ string calculate_fingerprint(string s, int T = 30) {
     string lbl_id_gene = id_gene + " "; // Etichetta con l'ID del gene
     string new_line = lbl_id_gene + " "; // Nuova riga per le fingerprint
 
-    vector<string> list_of_factors = substring_read(read, 300);
+    vector<string> list_of_factors = substring_read(read, 5000);
     for (const auto& sft : list_of_factors) {
-        vector<string> list_fact = factorization(sft, T); // Applica la fattorizzazione alla sottolunghezza
+        vector<int> list_fact = factorization(sft, T); // Applica la fattorizzazione alla sottolunghezza
 
         // Aggiunge le lunghezze delle fingerprint alla riga delle fingerprint
         for (const auto& fact : list_fact) {
-            new_line += to_string(fact.length()) + " ";
+            new_line += to_string(fact) + " ";
         }
         new_line += "| ";
     }
@@ -103,8 +103,8 @@ void extract_long_reads(Args args, string name_file, int remainder) {
                 if(i % 2 == 1){
                     string original, rc;
                     tie(original, rc) = manipulate_read(oldriga, riga);
-                    string f_original = calculate_fingerprint(original, 30);
-                    string f_rc = calculate_fingerprint(rc, 30);
+                    string f_original = calculate_fingerprint(original, 20);
+                    string f_rc = calculate_fingerprint(rc, 20);
 
                     mtx.lock();
                     cout << f_original << flush;
