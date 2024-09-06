@@ -209,7 +209,7 @@ void *thread_matches(void *args) {
                     ,thread_args->lengths, thread_args->read_ids
                     ,d->first, d->second);
 
-            fprintf(stderr, "%d: (%d, %d) ended\n", thread_args->id, d->first, d->second);
+            //fprintf(stderr, "%d: (%d, %d) ended\n", thread_args->id, d->first, d->second);
 
             free(d);
         }
@@ -217,8 +217,9 @@ void *thread_matches(void *args) {
             pthread_mutex_unlock(&queue_mutex);
             break;
         }
-
     }
+
+    fprintf(stderr, "thread %d ended\n", thread_args->id);
 
     pthread_exit(NULL);
 }
@@ -550,7 +551,7 @@ int main(int argc, char **argv){
             new->second = minimizers->len-1;
         }
 
-        fprintf(stderr, "(%d, %d)\n", new->first, new->second);
+        //fprintf(stderr, "(%d, %d)\n", new->first, new->second);
 
         g_queue_push_tail(jobs, new);
     }
