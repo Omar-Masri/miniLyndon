@@ -68,5 +68,7 @@ int main(int argc, char* argv[]) {
     //esegui l'esperimento fingerprint per long reads
         calculate_fingerprints_parallel(args);
 
+    std:cerr << "Factorization ended" << endl;
+
     return 0;
 }

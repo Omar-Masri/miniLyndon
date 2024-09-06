@@ -6,6 +6,9 @@
 
 using namespace std;
 
+vector<int> cfl_icfl_(const string& w, int cfl_max, int start, int end);
+vector<int> icfl_cfl_(const string& w, int cfl_max, int start, int end);
+
 string reverse_complement(string seq) {
     unordered_map<char, char> complement = {
         {'A', 'T'},
@@ -29,7 +32,7 @@ string reverse_complement(string seq) {
 //algoritmo di Duval per la fattorizzazione CFL
 vector<string> duval_(const string& s) {
     int n = s.length();
-    
+
     int i = 0;
     vector<string> res;
 
@@ -87,7 +90,7 @@ vector<int> get_failure_function(const string& s) {
     int i = 1;
     int j = 0;
     int m = s.length();
-    
+
     while (i < m) {
         if (s[j] == s[i]) {
             f[i] = j + 1;
@@ -100,7 +103,7 @@ vector<int> get_failure_function(const string& s) {
             i += 1;
         }
     }
-    
+
     return f;
 }
 
@@ -130,7 +133,7 @@ tuple<string, string, string, int> find_bre(const string& x, const string& y) {
 vector<string> icfl_(const string& w) {
     string x, y;
     //Trova il prefisso più lungo di w che è un'estensione limitata a destra di un suffisso di w
-    tie(x, y) = find_prefix(w); 
+    tie(x, y) = find_prefix(w);
 
     // Se il prefisso trovato è w stesso, significa che w è già una inverse Lyndon word
     if (x == w + "0") {
@@ -149,12 +152,12 @@ vector<string> icfl_(const string& w) {
     } else {
         l[0] = p + l[0];
     }
-  
+
     return l;
 }
 
 //fattorizzazione CFL-ICFL
-vector<string> cfl_icfl_(const string& w, int cfl_max = 30) {
+vector<string> c_i_(const string& w, int cfl_max = 30) {
     vector<string> result;
 
     vector<string> cfl_fact = duval_(w);
@@ -165,7 +168,7 @@ vector<string> cfl_icfl_(const string& w, int cfl_max = 30) {
         if (factor.length() > cfl_max) {
             // Calcola la fattorizzazione ICFL del fattore utilizzando la funzione icfl
             vector<string> icfl_fact = icfl_(factor);
-            
+
             // Aggiungi i fattori della fattorizzazione ICFL al risultato
             result.insert(result.end(), icfl_fact.begin(), icfl_fact.end());
         } else {
@@ -176,22 +179,123 @@ vector<string> cfl_icfl_(const string& w, int cfl_max = 30) {
     return result;
 }
 
+//fattorizzazione CFL-ICFL
+vector<int> cfl_icfl_(const string& w, int cfl_max, int start, int end) {
+    vector<int> result;
+
+    int n = end;
+
+    int i = start;
+
+    int old = 0;
+
+    while (i < n) {
+        int j = i + 1;
+        int k = i;
+        // ricerca della sottostringa di Lyndon
+        while (j < n && w[k] <= w[j]) {
+            if (w[k] < w[j]) {
+                k = i;
+            } else {
+                k += 1;
+            }
+            j += 1;
+        }
+
+        if(j-k >= cfl_max){
+            vector<int> icfl_fact = icfl_cfl_(w, cfl_max, i, i+(j-k));
+
+            int temp = result.size();
+
+            result.insert(result.end(), icfl_fact.begin(), icfl_fact.end());
+
+            result[temp] += old;
+            old = 0;
+        } else if(j-k > 1) {
+            result.push_back(old + j-k);
+            old = 0;
+        } else {
+            old += 1;
+        }
+
+        i += j - k;
+    }
+
+    if(old == 1)
+        result[result.size()-1] += 1;
+    else if(old != 0)
+        result.push_back(old);
+
+    return result;
+}
+
+//fattorizzazione CFL-ICFL
+vector<int> icfl_cfl_(const string& w, int cfl_max, int start, int end) {
+    vector<int> result;
+
+    int n = end;
+
+    int i = start;
+
+    int old = 0;
+
+    while (i < n) {
+        int j = i + 1;
+        int k = i;
+        // ricerca della sottostringa di Lyndon
+        while (j < n && w[j] <= w[k]) {
+            if (w[j] < w[k]) {
+                k = i;
+            } else {
+                k += 1;
+            }
+            j += 1;
+        }
+
+        if(j-k >= cfl_max){
+            vector<int> cfl_fact = cfl_icfl_(w, cfl_max, i, i+(j-k));
+
+            int temp = result.size();
+
+            result.insert(result.end(), cfl_fact.begin(), cfl_fact.end());
+
+            result[temp] += old;
+            old = 0;
+        } else if(j-k > 1) {
+            result.push_back(old + j-k);
+            old = 0;
+        } else {
+            old += 1;
+        }
+
+        i += j - k;
+    }
+
+    if(old == 1)
+        result[result.size()-1] += 1;
+    else if(old != 0)
+        result.push_back(old);
+
+    return result;
+}
+
 //fattorizzazione combinata tra seq e la sua reverse&complement
-vector<string> factorization(const string& seq, int k) {
+vector<int> factorization(const string& seq, int k) {
     vector<int> factors1;
-    for (string factor : cfl_icfl_(seq, k))
+    for (string factor : c_i_(seq))
         factors1.push_back(factor.size());
-    
+
     string complement = reverse_complement(seq);
 
     //Calcola la fattorizzazione dei fattori del reverse&complement
     vector<int> factors2;
-    vector<string> cfl_icfl_complement = cfl_icfl_(complement);
-    for (int i = cfl_icfl_complement.size() -1; i >= 0; i--)
+    vector<string> cfl_icfl_complement = c_i_(complement);
+    for (int i = cfl_icfl_complement.size()-1; i >= 0; i--){
        factors2.push_back(cfl_icfl_complement[i].size());
+    }
 
     string rest = seq;
-    vector<string> result;
+    vector<int> result;
     int i = 0;
     int n;
     // estrarre i fattori dalla sequenza in base alla comparazione dei fattori delle due fattorizzazioni
@@ -199,16 +303,16 @@ vector<string> factorization(const string& seq, int k) {
         if (factors1[0] < factors2[0]) {
             //Se la lunghezza del prossimo fattore nella prima fattorizzazione è minore,
             // estrai la lunghezza del fattore dalla lista dei fattori della prima fattorizzazione
-            n = factors1[0]; 
+            n = factors1[0];
             factors1.erase(factors1.begin());
-            
+
             // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella seconda fattorizzazione
             factors2[0] = factors2[0] - n;
         }else{
             // altrimenti estrai la lunghezza del fattore dalla lista dei fattori della seconda fattorizzazione
-            n = factors2[0];  
+            n = factors2[0];
             factors2.erase(factors2.begin());
-            
+
             // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella prima fattorizzazione
             factors1[0] = factors1[0] - n;
 
@@ -217,40 +321,10 @@ vector<string> factorization(const string& seq, int k) {
                 factors1.erase(factors1.begin());
                 }
         }
-        
-        // Estrai il fattore corrispondente dalla sequenza e aggiorna la sequenza rimanente
-        string f = rest.substr(0, n);
-        rest = rest.substr(n);
 
         // Aggiungi il fattore estratto al risultato
-        result.push_back(f);
+        result.push_back(n);
     }
 
     return result;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

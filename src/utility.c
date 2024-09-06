@@ -2,6 +2,18 @@
 
 extern pthread_mutex_t mutex;
 
+
+void *mymalloc(size_t size){
+    void *result = malloc(size);
+
+    if(result == NULL){
+        fprintf(stderr, "unable to manually allocate memory!");
+        exit(1);
+    }
+
+    return result;
+}
+
 char* substring(const char* str, int start, int end) {
     int len = strlen(str);
 
