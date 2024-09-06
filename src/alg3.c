@@ -10,7 +10,7 @@
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int K = 7;
-int W = 11;
+int W = 14;
 int MIN_SUP_LENGTH = 15;
 int MAX_K_FINGER_OCCURRENCE = 1000;  //not this value go to line 526
 int MIN_SHARED_K_FINGERS = 6;

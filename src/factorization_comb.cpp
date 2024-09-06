@@ -157,13 +157,35 @@ vector<string> icfl_(const string& w) {
 }
 
 //fattorizzazione CFL-ICFL
+vector<string> c_i_(const string& w, int cfl_max = 30) {
+    vector<string> result;
+
+    vector<string> cfl_fact = duval_(w);
+
+    // Itera attraverso ciascun fattore nella fattorizzazione CFL di w
+    for (const string& factor : cfl_fact) {
+        // Se la lunghezza del fattore supera la soglia massima cfl_max
+        if (factor.length() > cfl_max) {
+            // Calcola la fattorizzazione ICFL del fattore utilizzando la funzione icfl
+            vector<string> icfl_fact = icfl_(factor);
+
+            // Aggiungi i fattori della fattorizzazione ICFL al risultato
+            result.insert(result.end(), icfl_fact.begin(), icfl_fact.end());
+        } else {
+            result.push_back(factor);
+        }
+    }
+
+    return result;
+}
+
+//fattorizzazione CFL-ICFL
 vector<int> cfl_icfl_(const string& w, int cfl_max, int start, int end) {
     vector<int> result;
 
     int n = end;
 
     int i = start;
-    vector<string> res;
 
     int old = 0;
 
@@ -199,7 +221,9 @@ vector<int> cfl_icfl_(const string& w, int cfl_max, int start, int end) {
         i += j - k;
     }
 
-    if(old != 0)
+    if(old == 1)
+        result[result.size()-1] += 1;
+    else if(old != 0)
         result.push_back(old);
 
     return result;
@@ -212,7 +236,6 @@ vector<int> icfl_cfl_(const string& w, int cfl_max, int start, int end) {
     int n = end;
 
     int i = start;
-    vector<string> res;
 
     int old = 0;
 
@@ -248,7 +271,9 @@ vector<int> icfl_cfl_(const string& w, int cfl_max, int start, int end) {
         i += j - k;
     }
 
-    if(old != 0)
+    if(old == 1)
+        result[result.size()-1] += 1;
+    else if(old != 0)
         result.push_back(old);
 
     return result;
@@ -257,18 +282,16 @@ vector<int> icfl_cfl_(const string& w, int cfl_max, int start, int end) {
 //fattorizzazione combinata tra seq e la sua reverse&complement
 vector<int> factorization(const string& seq, int k) {
     vector<int> factors1;
-    for (int factor : cfl_icfl_(seq, k, 0, seq.size()))
-        factors1.push_back(factor);
-
-    return factors1;
+    for (string factor : c_i_(seq))
+        factors1.push_back(factor.size());
 
     string complement = reverse_complement(seq);
 
     //Calcola la fattorizzazione dei fattori del reverse&complement
     vector<int> factors2;
-    vector<int> cfl_icfl_complement = cfl_icfl_(complement, k, 0, complement.size());
+    vector<string> cfl_icfl_complement = c_i_(complement);
     for (int i = cfl_icfl_complement.size()-1; i >= 0; i--){
-       factors2.push_back(cfl_icfl_complement[i]);
+       factors2.push_back(cfl_icfl_complement[i].size());
     }
 
     string rest = seq;
