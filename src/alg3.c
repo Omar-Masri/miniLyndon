@@ -1,6 +1,5 @@
 #include "alg3.h"
 #include "glibconfig.h"
-#include "utility.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,9 +7,10 @@
 #include <ctype.h>
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int K = 7;
-int W = 14;
+int W = 11;
 int MIN_SUP_LENGTH = 15;
 int MAX_K_FINGER_OCCURRENCE = 1000;  //not this value go to line 526
 int MIN_SHARED_K_FINGERS = 6;
@@ -41,8 +41,8 @@ static struct option long_options[] =
 };
 
 typedef struct {
-    int start;
-    int end;
+    int id;
+    GQueue *queue;
     GArray *minimizers;
     GHashTable *k_finger_occurrences;
     int k;
@@ -198,12 +198,27 @@ GHashTable *compute_k_finger_occurrences(GArray *fingerprint_list){
 void *thread_matches(void *args) {
     ThreadArgs *thread_args = (ThreadArgs *)args;
 
-    compute_matches(thread_args->minimizers,thread_args->k_finger_occurrences
+    while(true){
+        pthread_mutex_lock(&queue_mutex);
+        if(!g_queue_is_empty(thread_args->queue)){
+            Duo_int *d = g_queue_pop_head(thread_args->queue);
+            pthread_mutex_unlock(&queue_mutex);
+
+            compute_matches(thread_args->minimizers,thread_args->k_finger_occurrences
                     ,thread_args->k, thread_args->fp
                     ,thread_args->lengths, thread_args->read_ids
-                    ,thread_args->start, thread_args->end);
+                    ,d->first, d->second);
 
-    fprintf(stderr, "start: %d  end: %d thread ended\n", thread_args->start, thread_args->end);
+            fprintf(stderr, "%d: (%d, %d) ended\n", thread_args->id, d->first, d->second);
+
+            free(d);
+        }
+        else {
+            pthread_mutex_unlock(&queue_mutex);
+            break;
+        }
+
+    }
 
     pthread_exit(NULL);
 }
@@ -511,24 +526,36 @@ int main(int argc, char **argv){
     pthread_t threads[NUM_THREADS];
     ThreadArgs args[NUM_THREADS];
 
-    int move = 0;
     int partition_size = minimizers->len / NUM_THREADS;
 
     int st = minimizers->len;
 
     MAX_K_FINGER_OCCURRENCE = min(minimizers->len/500, MAX_K_FINGER_OCCURRENCE);
 
+    GQueue* jobs = g_queue_new();
+
+    int move = min(100, minimizers->len/100);
+
+    for(int i = 0; i < minimizers->len; i += move){
+        Duo_int *new = mymalloc(sizeof(Duo_int));
+        new->first = i;
+        new->second = i+move;
+
+        if((new->first % 2))
+            new->first -= 1;
+        if(!(new->second % 2))
+            new->second -= 1;
+
+        if(new->second >= minimizers->len){
+            new->second = minimizers->len-1;
+        }
+
+        fprintf(stderr, "(%d, %d)\n", new->first, new->second);
+
+        g_queue_push_tail(jobs, new);
+    }
+
     for (int i = 0; i < NUM_THREADS; ++i) {
-        move += st / (3 - (i/NUM_THREADS));   //geometric series
-        args[i].end = (i == 0) ? (minimizers->len - 1) : (args[i-1].start - 1);
-        args[i].start = (i == NUM_THREADS - 1) ? 0 : minimizers->len - move;
-
-        if((args[i].start % 2))
-            args[i].start -= 1;
-        if(!(args[i].end % 2))
-            args[i].end -= 1;
-
-        st = args[i].start;
 
         args[i].minimizers = minimizers;
         args[i].k_finger_occurrences = k_finger_occurrences;
@@ -536,8 +563,8 @@ int main(int argc, char **argv){
         args[i].fp = output;
         args[i].lengths = lengths;
         args[i].read_ids = read_ids;
-
-        fprintf(stderr, "(%d, %d)\n", args[i].start, args[i].end);
+        args[i].queue = jobs;
+        args[i].id = i+1;
 
         pthread_create(&threads[i], NULL, thread_matches, (void *)&args[i]);
     }

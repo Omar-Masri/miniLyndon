@@ -35,6 +35,11 @@ typedef struct {
 } Duo_char;
 
 typedef struct {
+    unsigned first;
+    unsigned second;
+} Duo_int;
+
+typedef struct {
     int first;
     Element *second;
     Occurrence *third;
@@ -91,16 +96,6 @@ void free_key_occurrences(gpointer key, gpointer value, gpointer user_data);
 void free_key_overlaps(gpointer key, gpointer value, gpointer user_data);
 void calculate_usage(struct rusage *usage);
 unsigned long read_off_memory_status();
-
-inline void *mymalloc(size_t size){
-    void *result = malloc(size);
-
-    if(result == NULL){
-        fprintf(stderr, "unable to manually allocate memory!");
-        exit(1);
-    }
-
-    return result;
-}
+void *mymalloc(size_t size);
 
 #endif // UTILITY_H_
