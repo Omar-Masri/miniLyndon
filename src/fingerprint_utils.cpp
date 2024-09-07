@@ -73,7 +73,7 @@ string calculate_fingerprint(string s, int T = 30) {
     string lbl_id_gene = id_gene + " "; // Etichetta con l'ID del gene
     string new_line = lbl_id_gene + " "; // Nuova riga per le fingerprint
 
-    vector<string> list_of_factors = substring_read(read, 300);
+    vector<string> list_of_factors = substring_read(read, 1000000);
     for (const auto& sft : list_of_factors) {
         vector<int> list_fact = factorization(sft, T); // Applica la fattorizzazione alla sottolunghezza
 

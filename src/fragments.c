@@ -336,22 +336,23 @@ static void free_array(Point_int **Points, int len){
         if(c_point->fragment != NULL){
             if(c_point->type)
                 free(c_point->fragment);
-            free(c_point);
-        }else
-            free(c_point);
+            //free(c_point);
+        }else{
+            //free(c_point);
+        }
     }
 
     free(Points);
 }
 
-static Point_int** merge_arrays(Point_int **arr1, Point_int **arr2, int len) {
+static Point_int** merge_arrays(Point_int *arr1, Point_int *arr2, int len) {
     Point_int **merged_array = mymalloc(sizeof(Point_int *) * (2*len+2));
 
     guint i = 0, j = 0;
 
     while (i < len && j < len) {
-        Point_int *elem1 = arr1[i];
-        Point_int *elem2 = arr2[j];
+        Point_int *elem1 = &arr1[i];
+        Point_int *elem2 = &arr2[j];
 
         if (elem1->first <= elem2->first) {
             merged_array[i+j+1] = elem1;
@@ -363,12 +364,12 @@ static Point_int** merge_arrays(Point_int **arr1, Point_int **arr2, int len) {
     }
 
     for (; i < len; i++) {
-        Point_int *elem1 = arr1[i];
+        Point_int *elem1 = &arr1[i];
         merged_array[i+j+1] = elem1;
     }
 
     for (; j < len; j++) {
-        Point_int *elem2 = arr2[j];
+        Point_int *elem2 = &arr2[j];
         merged_array[i+j+1] = elem2;
     }
 
@@ -421,7 +422,7 @@ void print_array_Point_int(GArray *array) {
 }
 
 Point_int *new_Point_int(int first, int second, bool type, Fragment_Cartesian *fragment){
-    Point_int *point = malloc(sizeof(Point_int));
+    Point_int *point = mymalloc(sizeof(Point_int));
 
     point->first = first;
     point->second = second;
@@ -500,8 +501,8 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
     /* Point_int *Points_s[es]; */
     /* Point_int *Points_e[es]; */
 
-    Point_int **Points_s = mymalloc(sizeof(Point_int *) * es);
-    Point_int **Points_e = mymalloc(sizeof(Point_int *) * es);
+    Point_int *Points_s = mymalloc(sizeof(Point_int) * es);
+    Point_int *Points_e = mymalloc(sizeof(Point_int) * es);
 
     int l = 0;
     for(int s = start; s < end; s++){
@@ -509,27 +510,26 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
 
         Fragment_Cartesian *fragment = mymalloc(sizeof(Fragment_Cartesian));
 
-        Point_int *point_s = new_Point_int(value->second->value
-                                           , value->third->second, true, fragment);
-        Point_int *point_e = new_Point_int(value->second->value+k
-                                           , value->third->second+k, false, fragment);
+        Points_s[l].first = value->second->value;
+        Points_s[l].second = value->third->second;
+        Points_s[l].type = true;
+        Points_s[l].fragment = fragment;
 
-        fragment->start = point_s;
-        fragment->end = point_e;
+        Points_e[l].first = value->second->value+k;
+        Points_e[l].second = value->third->second+k;
+        Points_e[l].type = false;
+        Points_e[l].fragment = fragment;
+
+        fragment->start = &Points_s[l];
+        fragment->end = &Points_e[l];
         fragment->prec = NULL;
         fragment->triple = value;
         fragment->score = 0;
-
-        Points_s[l] = point_s;
-        Points_e[l] = point_e;
 
         l++;
     }
 
     Point_int **Points = merge_arrays(Points_s, Points_e, es);
-
-    free(Points_s);
-    free(Points_e);
 
     Point_int *origin = mymalloc(sizeof(Point_int));
     Point_int *terminus = mymalloc(sizeof(Point_int));
@@ -597,6 +597,12 @@ int maximal_colinear_subset(GArray *array, int start, int end, int k, offset_str
                 int score = q->fragment->score;
 
                 free_array(Points, 2*es+2);
+
+                free(origin);
+                free(terminus);
+
+                free(Points_s);
+                free(Points_e);
 
                 g_tree_destroy(D);
 

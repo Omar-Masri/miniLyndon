@@ -282,8 +282,10 @@ vector<int> icfl_cfl_(const string& w, int cfl_max, int start, int end) {
 //fattorizzazione combinata tra seq e la sua reverse&complement
 vector<int> factorization(const string& seq, int k) {
     vector<int> factors1;
-    for (string factor : c_i_(seq))
-        factors1.push_back(factor.size());
+    for(int factor : cfl_icfl_(seq, k, 0, seq.size()))
+        factors1.push_back(factor);
+
+    return factors1;
 
     string complement = reverse_complement(seq);
 
@@ -319,7 +321,7 @@ vector<int> factorization(const string& seq, int k) {
             // Se la lunghezza del prossimo fattore nella seconda fattorizzazione è diventata zero, rimuovila dalla lista
             if (factors1[0] == 0) {
                 factors1.erase(factors1.begin());
-                }
+            }
         }
 
         // Aggiungi il fattore estratto al risultato
