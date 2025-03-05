@@ -18,7 +18,11 @@ struct Args {
     string fact = "create";
     string shift = "shift";
     string filter = "list";
+    int cfl_max = 30;
+    int recursive_size = 25;
+    int segment_size = -1;
     int n = 1;
+    bool comb = false;
 };
 
 void extract_long_reads(Args args, string name_file, int remainder);
