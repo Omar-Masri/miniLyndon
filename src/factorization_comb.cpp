@@ -4,10 +4,12 @@
 #include <tuple>
 #include <iostream>
 
+#include "fingerprint_utils.h"
+
 using namespace std;
 
-vector<int> cfl_icfl_(const string& w, int cfl_max, int start, int end);
-vector<int> icfl_cfl_(const string& w, int cfl_max, int start, int end);
+vector<int> cfl_icfl_r(const string& w, int cfl_max, int start, int end);
+vector<int> icfl_cfl_r(const string& w, int cfl_max, int start, int end);
 
 string reverse_complement(string seq) {
     unordered_map<char, char> complement = {
@@ -180,7 +182,7 @@ vector<string> c_i_(const string& w, int cfl_max = 30) {
 }
 
 //fattorizzazione CFL-ICFL
-vector<int> cfl_icfl_(const string& w, int cfl_max, int start, int end) {
+vector<int> cfl_icfl_r(const string& w, int cfl_max, int start, int end) {
     vector<int> result;
 
     int n = end;
@@ -203,7 +205,7 @@ vector<int> cfl_icfl_(const string& w, int cfl_max, int start, int end) {
         }
 
         if(j-k >= cfl_max){
-            vector<int> icfl_fact = icfl_cfl_(w, cfl_max, i, i+(j-k));
+            vector<int> icfl_fact = icfl_cfl_r(w, cfl_max, i, i+(j-k));
 
             int temp = result.size();
 
@@ -230,7 +232,7 @@ vector<int> cfl_icfl_(const string& w, int cfl_max, int start, int end) {
 }
 
 //fattorizzazione CFL-ICFL
-vector<int> icfl_cfl_(const string& w, int cfl_max, int start, int end) {
+vector<int> icfl_cfl_r(const string& w, int cfl_max, int start, int end) {
     vector<int> result;
 
     int n = end;
@@ -253,7 +255,7 @@ vector<int> icfl_cfl_(const string& w, int cfl_max, int start, int end) {
         }
 
         if(j-k >= cfl_max){
-            vector<int> cfl_fact = cfl_icfl_(w, cfl_max, i, i+(j-k));
+            vector<int> cfl_fact = cfl_icfl_r(w, cfl_max, i, i+(j-k));
 
             int temp = result.size();
 
@@ -280,51 +282,207 @@ vector<int> icfl_cfl_(const string& w, int cfl_max, int start, int end) {
 }
 
 //fattorizzazione combinata tra seq e la sua reverse&complement
-vector<int> factorization(const string& seq, int k) {
-    vector<int> factors1;
-    for (string factor : c_i_(seq))
-        factors1.push_back(factor.size());
+vector<int> factorization(const string& seq, int k, Args args) {
 
-    string complement = reverse_complement(seq);
+    if(args.type_factorization == "CFL"){
+        vector<int> factors1;
+        for(string factor : duval_(seq))
+            factors1.push_back(factor.size());
 
-    //Calcola la fattorizzazione dei fattori del reverse&complement
-    vector<int> factors2;
-    vector<string> cfl_icfl_complement = c_i_(complement);
-    for (int i = cfl_icfl_complement.size()-1; i >= 0; i--){
-       factors2.push_back(cfl_icfl_complement[i].size());
-    }
+        if(args.comb == false)
+            return factors1;
 
-    string rest = seq;
-    vector<int> result;
-    int i = 0;
-    int n;
-    // estrarre i fattori dalla sequenza in base alla comparazione dei fattori delle due fattorizzazioni
-    while (!factors1.empty() && !factors2.empty()) {
-        if (factors1[0] < factors2[0]) {
-            //Se la lunghezza del prossimo fattore nella prima fattorizzazione è minore,
-            // estrai la lunghezza del fattore dalla lista dei fattori della prima fattorizzazione
-            n = factors1[0];
-            factors1.erase(factors1.begin());
+        string complement = reverse_complement(seq);
 
-            // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella seconda fattorizzazione
-            factors2[0] = factors2[0] - n;
-        }else{
-            // altrimenti estrai la lunghezza del fattore dalla lista dei fattori della seconda fattorizzazione
-            n = factors2[0];
-            factors2.erase(factors2.begin());
-
-            // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella prima fattorizzazione
-            factors1[0] = factors1[0] - n;
-
-            // Se la lunghezza del prossimo fattore nella seconda fattorizzazione è diventata zero, rimuovila dalla lista
-            if (factors1[0] == 0) {
-                factors1.erase(factors1.begin());
-                }
+        vector<int> factors2;
+        vector<string> cfl_icfl_complement = duval_(complement);
+        for (int i = cfl_icfl_complement.size()-1; i >= 0; i--){
+            factors2.push_back(cfl_icfl_complement[i].size());
         }
 
-        // Aggiungi il fattore estratto al risultato
-        result.push_back(n);
-    }
+        string rest = seq;
+        vector<int> result;
+        int i = 0;
+        int n;
+        // estrarre i fattori dalla sequenza in base alla comparazione dei fattori delle due fattorizzazioni
+        while (!factors1.empty() && !factors2.empty()) {
+            if (factors1[0] < factors2[0]) {
+                //Se la lunghezza del prossimo fattore nella prima fattorizzazione è minore,
+                // estrai la lunghezza del fattore dalla lista dei fattori della prima fattorizzazione
+                n = factors1[0];
+                factors1.erase(factors1.begin());
 
-    return result;
+                // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella seconda fattorizzazione
+                factors2[0] = factors2[0] - n;
+            }else{
+                // altrimenti estrai la lunghezza del fattore dalla lista dei fattori della seconda fattorizzazione
+                n = factors2[0];
+                factors2.erase(factors2.begin());
+
+                // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella prima fattorizzazione
+                factors1[0] = factors1[0] - n;
+
+                // Se la lunghezza del prossimo fattore nella seconda fattorizzazione è diventata zero, rimuovila dalla lista
+                if (factors1[0] == 0) {
+                    factors1.erase(factors1.begin());
+                }
+            }
+
+            // Aggiungi il fattore estratto al risultato
+            result.push_back(n);
+        }
+
+        return result;
+
+    } else if (args.type_factorization == "ICFL"){
+        vector<int> factors1;
+        for(string factor : icfl_(seq))
+            factors1.push_back(factor.size());
+
+        if(args.comb == false)
+            return factors1;
+
+        string complement = reverse_complement(seq);
+
+        vector<int> factors2;
+        vector<string> cfl_icfl_complement = icfl_(complement);
+        for (int i = cfl_icfl_complement.size()-1; i >= 0; i--){
+            factors2.push_back(cfl_icfl_complement[i].size());
+        }
+
+        string rest = seq;
+        vector<int> result;
+        int i = 0;
+        int n;
+        // estrarre i fattori dalla sequenza in base alla comparazione dei fattori delle due fattorizzazioni
+        while (!factors1.empty() && !factors2.empty()) {
+            if (factors1[0] < factors2[0]) {
+                //Se la lunghezza del prossimo fattore nella prima fattorizzazione è minore,
+                // estrai la lunghezza del fattore dalla lista dei fattori della prima fattorizzazione
+                n = factors1[0];
+                factors1.erase(factors1.begin());
+
+                // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella seconda fattorizzazione
+                factors2[0] = factors2[0] - n;
+            }else{
+                // altrimenti estrai la lunghezza del fattore dalla lista dei fattori della seconda fattorizzazione
+                n = factors2[0];
+                factors2.erase(factors2.begin());
+
+                // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella prima fattorizzazione
+                factors1[0] = factors1[0] - n;
+
+                // Se la lunghezza del prossimo fattore nella seconda fattorizzazione è diventata zero, rimuovila dalla lista
+                if (factors1[0] == 0) {
+                    factors1.erase(factors1.begin());
+                }
+            }
+
+            // Aggiungi il fattore estratto al risultato
+            result.push_back(n);
+        }
+
+        return result;
+
+    } else if (args.type_factorization == "CFL_ICFL"){
+        vector<int> factors1;
+        for(string factor : c_i_(seq, k))
+            factors1.push_back(factor.size());
+
+        if(args.comb == false)
+            return factors1;
+
+        string complement = reverse_complement(seq);
+
+        vector<int> factors2;
+        vector<string> cfl_icfl_complement = c_i_(complement, k);
+        for (int i = cfl_icfl_complement.size()-1; i >= 0; i--){
+            factors2.push_back(cfl_icfl_complement[i].size());
+        }
+
+        string rest = seq;
+        vector<int> result;
+        int i = 0;
+        int n;
+        // estrarre i fattori dalla sequenza in base alla comparazione dei fattori delle due fattorizzazioni
+        while (!factors1.empty() && !factors2.empty()) {
+            if (factors1[0] < factors2[0]) {
+                //Se la lunghezza del prossimo fattore nella prima fattorizzazione è minore,
+                // estrai la lunghezza del fattore dalla lista dei fattori della prima fattorizzazione
+                n = factors1[0];
+                factors1.erase(factors1.begin());
+
+                // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella seconda fattorizzazione
+                factors2[0] = factors2[0] - n;
+            }else{
+                // altrimenti estrai la lunghezza del fattore dalla lista dei fattori della seconda fattorizzazione
+                n = factors2[0];
+                factors2.erase(factors2.begin());
+
+                // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella prima fattorizzazione
+                factors1[0] = factors1[0] - n;
+
+                // Se la lunghezza del prossimo fattore nella seconda fattorizzazione è diventata zero, rimuovila dalla lista
+                if (factors1[0] == 0) {
+                    factors1.erase(factors1.begin());
+                }
+            }
+
+            // Aggiungi il fattore estratto al risultato
+            result.push_back(n);
+        }
+
+        return result;
+
+    } else {
+        vector<int> factors1;
+        for(int factor : cfl_icfl_r(seq, args.recursive_size, 0, seq.size()))
+            factors1.push_back(factor);
+
+        if(args.comb == false)
+            return factors1;
+
+        string complement = reverse_complement(seq);
+
+        vector<int> factors2;
+        vector<int> cfl_icfl_complement = cfl_icfl_r(complement, args.recursive_size, 0, seq.size());
+        for (int i = cfl_icfl_complement.size()-1; i >= 0; i--){
+            factors2.push_back(cfl_icfl_complement[i]);
+        }
+
+        string rest = seq;
+        vector<int> result;
+        int i = 0;
+        int n;
+        // estrarre i fattori dalla sequenza in base alla comparazione dei fattori delle due fattorizzazioni
+        while (!factors1.empty() && !factors2.empty()) {
+            if (factors1[0] < factors2[0]) {
+                //Se la lunghezza del prossimo fattore nella prima fattorizzazione è minore,
+                // estrai la lunghezza del fattore dalla lista dei fattori della prima fattorizzazione
+                n = factors1[0];
+                factors1.erase(factors1.begin());
+
+                // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella seconda fattorizzazione
+                factors2[0] = factors2[0] - n;
+            }else{
+                // altrimenti estrai la lunghezza del fattore dalla lista dei fattori della seconda fattorizzazione
+                n = factors2[0];
+                factors2.erase(factors2.begin());
+
+                // Sottrai la lunghezza del fattore dalla lunghezza del prossimo fattore nella prima fattorizzazione
+                factors1[0] = factors1[0] - n;
+
+                // Se la lunghezza del prossimo fattore nella seconda fattorizzazione è diventata zero, rimuovila dalla lista
+                if (factors1[0] == 0) {
+                    factors1.erase(factors1.begin());
+                }
+            }
+
+            // Aggiungi il fattore estratto al risultato
+            result.push_back(n);
+        }
+
+        return result;
+
+    }
 }

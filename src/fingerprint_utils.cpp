@@ -41,7 +41,7 @@ vector<string> substring_read(const string& str, int size = 300) {
     vector<string> list_of_factors; // Lista per contenere le sottolunghezze
 
     // Se la lunghezza della stringa è minore della dimensione desiderata, aggiungila direttamente alla lista
-    if (str.length() < size) {
+    if (str.length() < size || size == -1) {
         list_of_factors.push_back(str);
     } else {
         // Altrimenti, suddividi la stringa in sottosequenze della dimensione specificata
@@ -61,7 +61,7 @@ vector<string> substring_read(const string& str, int size = 300) {
 }
 
 
-string calculate_fingerprint(string s, int T = 30) {
+string calculate_fingerprint(Args args, string s, int T = 30) {
     string id_gene = ""; // Variabile per l'ID del gene
 
     istringstream riga(s);
@@ -73,9 +73,9 @@ string calculate_fingerprint(string s, int T = 30) {
     string lbl_id_gene = id_gene + " "; // Etichetta con l'ID del gene
     string new_line = lbl_id_gene + " "; // Nuova riga per le fingerprint
 
-    vector<string> list_of_factors = substring_read(read, 300);
+    vector<string> list_of_factors = substring_read(read, args.segment_size);
     for (const auto& sft : list_of_factors) {
-        vector<int> list_fact = factorization(sft, T); // Applica la fattorizzazione alla sottolunghezza
+        vector<int> list_fact = factorization(sft, T, args); // Applica la fattorizzazione alla sottolunghezza
 
         // Aggiunge le lunghezze delle fingerprint alla riga delle fingerprint
         for (const auto& fact : list_fact) {
@@ -88,7 +88,6 @@ string calculate_fingerprint(string s, int T = 30) {
     
     return new_line;
 }
-
 
 // Funzione per leggere il file FASTA, estrarre le letture e restituire la lista delle letture
 void extract_long_reads(Args args, string name_file, int remainder) {
@@ -103,8 +102,8 @@ void extract_long_reads(Args args, string name_file, int remainder) {
                 if(i % 2 == 1){
                     string original, rc;
                     tie(original, rc) = manipulate_read(oldriga, riga);
-                    string f_original = calculate_fingerprint(original, 35);
-                    string f_rc = calculate_fingerprint(rc, 35);
+                    string f_original = calculate_fingerprint(args, original, args.cfl_max);
+                    string f_rc = calculate_fingerprint(args, rc, args.cfl_max);
 
                     mtx.lock();
                     cout << f_original << flush;
