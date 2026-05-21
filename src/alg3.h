@@ -8,9 +8,12 @@
 #include <pthread.h>
 #include <unistd.h>
 
-GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i, int k),
+GArray* alg3_minimizers(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i, int k),
              void (*insertt)(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k),
-             int n);
+                        int n);
+GArray* alg3_syncmers(GArray* fingerprint, int s, int k, int (*phi)(GArray *array, int i, int k),
+             void (*insertt)(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k),
+                      int n);
 GHashTable *compute_k_finger_occurrences(GArray *fingerprint_list);
 void *thread_matches(void *args);
 void compute_matches(GArray *minimizers, GHashTable *k_finger_occurrences, int k, FILE *fp,

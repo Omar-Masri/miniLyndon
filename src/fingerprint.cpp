@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
                 args.shift = optarg;
                 break;
             case 'r':
-                args.filter = optarg;
+                args.recursive_size = std::stoi(optarg);
                 break;
             case 'm':
                 args.cfl_max = std::stoi(optarg);
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
                           << "  -F <fingerprint>           (Optional) Set the fingerprint file\n"
                           << "  -t <factorization>         (Optional) Set the factorization value\n"
                           << "  -h <shift>                 (Optional) Set the shift value\n"
-                          << "  -r <filter>                (Optional) Set the filter value\n"
+                          << "  -r <recursive_size>        (Optional) Set the recursive_size value\n"
                           << "  -m <cfl_max>               (Optional) Set CFL max size (integer)\n"
                           << std::endl;
                 exit(EXIT_FAILURE);

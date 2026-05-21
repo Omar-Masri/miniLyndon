@@ -21,6 +21,8 @@ int MIN_REGION_LENGTH = 10;
 double MIN_OVERLAP_COVERAGE = 0.10;
 int MIN_OVERLAP_LENGTH = 100;
 int NUM_THREADS = 6;
+int USE_SYNCMERS = 0;
+int S = 15;
 
 static struct option long_options[] =
 {
@@ -36,6 +38,8 @@ static struct option long_options[] =
     {"min_overlap_coverage", required_argument, NULL, 'a'},
     {"min_overlap_length", required_argument, NULL, 'o'},
     {"num_threads", required_argument, NULL, 't'},
+    {"syncmer", no_argument, 0, 'y'},
+    {"smer", required_argument, 0, 'p'}, 
     {"help", no_argument, NULL, 'h'},
     {NULL, 0, NULL, 0}
 };
@@ -110,7 +114,7 @@ static inline int compare_Triple_fragment(const void *f, const void *s) {
     return 0;
 }
 
-GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i, int k),
+GArray* alg3_minimizers(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i, int k),
              void insertt(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k),
              int n) {
     GArray *rfinger = g_array_new(0, 0, sizeof(Element *));
@@ -159,6 +163,71 @@ GArray* alg3(GArray* fingerprint, int w, int k, int (*phi)(GArray *array, int i,
 
     return rfinger;
 
+}
+
+GArray* alg3_syncmers(GArray* fingerprint, int s, int k, 
+             int (*phi)(GArray *array, int i, int k),
+             void insertt(GArray *array, GQueue *queue, Element *X, int (*phi)(GArray *array, int i, int k), int k),
+             int n) {
+    
+    GArray *rfinger = g_array_new(0, 0, sizeof(Element *));
+    GQueue *queue = g_queue_new();
+    int length = 0;
+
+    int w_k = s - k + 1;
+
+    for (int x = 0; x <= n - k; x++) {
+        Element *el = mymalloc(sizeof(Element));
+        int k_finger = g_array_index(fingerprint, int, x);
+
+        length += k_finger;
+
+        el->value = x;
+        el->fingerprint = 0;
+        el->k_finger = supporting_length(fingerprint, x, k);
+        el->index_offset = length - k_finger;
+
+        insertt(fingerprint, queue, el, supporting_length, k);
+
+        if (x >= w_k - 1) {
+            int smer_start = x - w_k + 1;
+            
+            Element *min_kmer = fetch(queue, smer_start);
+            int min_k_pos = min_kmer->value - smer_start;
+
+            if (min_k_pos == 0 || min_k_pos == (s - k)) {
+                
+                if (supporting_length(fingerprint, smer_start, s) >= MIN_SUP_LENGTH) {
+                    
+                    if (!(rfinger->len) || 
+                        (g_array_index(rfinger, Element *, rfinger->len - 1))->value != smer_start) {
+                        
+                        Element *syncmer_el = mymalloc(sizeof(Element));
+                        syncmer_el->value = smer_start;
+                        syncmer_el->fingerprint = djb2(fingerprint, smer_start, s);
+                        syncmer_el->k_finger = supporting_length(fingerprint, smer_start, s);
+                        syncmer_el->index_offset = min_kmer->index_offset;
+
+                        g_array_append_val(rfinger, syncmer_el);
+                    }
+                }
+            }
+        }
+    }
+
+    for (int x = n - k + 1; x < n; x++)
+        length += g_array_index(fingerprint, int, x);
+
+    while (!g_queue_is_empty(queue)) {
+        Element *data = (Element *)g_queue_pop_head(queue);
+        if (data->fingerprint == 0)
+            free(data);
+    }
+
+    g_queue_free(queue);
+    g_array_append_val(fingerprint, length);
+
+    return rfinger;
 }
 
 static guint long_hash(const void* g){
@@ -379,6 +448,8 @@ void print_help() {
     printf("  -a, --min_overlap_coverage <float>  : Set the minimum overlap coverage (MIN_OVERLAP_COVERAGE) between 0 and 1 (default: %.2f)\n", MIN_OVERLAP_COVERAGE);
     printf("  -o, --min_overlap_length <int>      : Set the minimum overlap length (MIN_OVERLAP_LENGTH) (default: %d)\n", MIN_OVERLAP_LENGTH);
     printf("  -t, --num_threads <int>             : Set the number of threads (NUM_THREADS) (default: %d)\n", NUM_THREADS);
+    printf("  -y, --syncmer                  : Use Syncmers instead of Minimizers (default: %s)\n", USE_SYNCMERS ? "true" : "false");
+    printf("  -p, --smer <int>               : Set the value of S for syncmers (default: %d)\n", S);
     printf("  -h, --help                          : Show this help message\n");
 }
 
@@ -399,7 +470,7 @@ int main(int argc, char **argv){
 
     //Start ------------------ Parameter Parsing
     int c;
-    while ((c = getopt_long(argc, argv, "k:w:l:x:s:c:r:d:m:a:o:t:h", long_options, NULL)) != -1){
+    while ((c = getopt_long(argc, argv, "k:w:l:x:s:c:r:d:m:a:o:t:yp:h", long_options, NULL)) != -1){
     switch (c)
       {
       case 'k':
@@ -465,6 +536,13 @@ int main(int argc, char **argv){
         if(optarg != NULL)
             NUM_THREADS =  atoi(optarg);
         break;
+      case 'y':
+            USE_SYNCMERS = 1;
+            break;
+      case 'p':
+            if(optarg != NULL)
+                S = atoi(optarg);
+            break;
       case 'h':
         print_help();
         return 0;
@@ -493,7 +571,13 @@ int main(int argc, char **argv){
 
         GArray *array = get_k_fingers(line, &read_id);
 
-        GArray* res = alg3(array, W, K, supporting_length, insertLex, array->len);
+        GArray *res;
+
+        if (USE_SYNCMERS) {
+            res = alg3_syncmers(array, S, K, supporting_length, insertLex, array->len);
+        } else {
+            res = alg3_minimizers(array, W, K, supporting_length, insertLex, array->len);
+        }
 
         g_array_append_val(read_ids, read_id);
 
